@@ -8,6 +8,9 @@ import lint from './oxlint.config.ts'
 import { ensureBucketPlugin } from './plugins/ensure-bucket.ts'
 
 const config = defineConfig({
+  server: {
+    port: 3000,
+  },
   staged: {
     '*': 'vp check --fix',
   },
