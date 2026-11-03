@@ -1,6 +1,6 @@
 import { cva } from 'class-variance-authority'
 
-export const title = cva('scroll-m-20 font-semibold tracking-tight text-balance', {
+export const title = cva('scroll-m-20 font-serif font-semibold tracking-tight text-balance', {
   variants: {
     h: {
       1: 'text-4xl lg:text-5xl',
@@ -14,7 +14,7 @@ export const title = cva('scroll-m-20 font-semibold tracking-tight text-balance'
 export const eyebrow = cva('text-xs font-medium tracking-widest text-muted-foreground uppercase')
 
 export const article =
-  'prose prose-headings:font-semibold prose-headings:tracking-tight prose-a:font-medium prose-a:underline prose-a:decoration-border prose-a:underline-offset-4'
+  'prose prose-headings:font-serif prose-headings:font-semibold prose-headings:tracking-tight prose-a:font-medium prose-a:underline prose-a:decoration-border prose-a:underline-offset-4'
 
 export const text = cva('', {
   variants: {

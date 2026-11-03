@@ -1,3 +1,4 @@
+@import './fonts.css';
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
@@ -10,7 +11,7 @@
 }
 
 body {
-  @apply m-0 min-h-svh bg-background text-foreground antialiased;
+  @apply m-0 min-h-svh bg-background font-sans text-foreground antialiased;
 }
 
 code {
@@ -110,6 +111,8 @@ code {
 }
 
 @theme inline {
+  --font-sans: Biryani, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Eczar, ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
