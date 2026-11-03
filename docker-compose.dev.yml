@@ -12,5 +12,23 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: rustfs_picsail_dev
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: ':9000'
+      RUSTFS_CONSOLE_ADDRESS: ':9001'
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+    volumes:
+      - rustfs_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  rustfs_data:
