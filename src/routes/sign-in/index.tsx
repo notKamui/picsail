@@ -22,7 +22,7 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Enter your password'),
 })
 
-export const Route = createFileRoute('/sign-in')({
+export const Route = createFileRoute('/sign-in/')({
   component: SignInPage,
 })
 

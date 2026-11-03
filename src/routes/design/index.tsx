@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { article, eyebrow, link, text, title } from '@/components/ui/typography'
 
-export const Route = createFileRoute('/design')({
+export const Route = createFileRoute('/design/')({
   head: () => ({
     meta: [{ title: 'Design' }],
   }),

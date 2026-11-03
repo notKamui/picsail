@@ -63,6 +63,12 @@ function Home() {
         </CardContent>
         <CardFooter className="flex flex-wrap gap-3">
           <Button asChild>
+            <Link to="/test/upload">Test upload</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/test/files">Test files</Link>
+          </Button>
+          <Button asChild>
             <Link to="/sign-in">Sign in</Link>
           </Button>
           <Button variant="secondary" asChild>

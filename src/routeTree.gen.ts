@@ -10,128 +10,167 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DesignRouteImport } from './routes/design'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as ApiInfoRouteImport } from './routes/api/info'
-import { Route as ApiUploadRouteImport } from './routes/api/upload'
-import { Route as FSplatRouteImport } from './routes/f.$'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiInfoRouteRouteImport } from './routes/api/info/route'
+import { Route as ApiUploadRouteRouteImport } from './routes/api/upload/route'
+import { Route as DesignIndexRouteImport } from './routes/design/index'
+import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
+import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
+import { Route as ApiAuthSplatRouteRouteImport } from './routes/api/auth/$/route'
+import { Route as TestFilesIndexRouteImport } from './routes/test/files/index'
+import { Route as TestUploadIndexRouteImport } from './routes/test/upload/index'
+import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DesignRoute = DesignRouteImport.update({
-  id: '/design',
-  path: '/design',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiInfoRoute = ApiInfoRouteImport.update({
+const ApiInfoRouteRoute = ApiInfoRouteRouteImport.update({
   id: '/api/info',
   path: '/api/info',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiUploadRoute = ApiUploadRouteImport.update({
+const ApiUploadRouteRoute = ApiUploadRouteRouteImport.update({
   id: '/api/upload',
   path: '/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FSplatRoute = FSplatRouteImport.update({
+const DesignIndexRoute = DesignIndexRouteImport.update({
+  id: '/design/',
+  path: '/design/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FSplatRouteRoute = FSplatRouteRouteImport.update({
   id: '/f/$',
   path: '/f/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+const SignInIndexRoute = SignInIndexRouteImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpIndexRoute = SignUpIndexRouteImport.update({
+  id: '/sign-up/',
+  path: '/sign-up/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRouteRoute = ApiAuthSplatRouteRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestFilesIndexRoute = TestFilesIndexRouteImport.update({
+  id: '/test/files/',
+  path: '/test/files/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestUploadIndexRoute = TestUploadIndexRouteImport.update({
+  id: '/test/upload/',
+  path: '/test/upload/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestFilesIdIndexRoute = TestFilesIdIndexRouteImport.update({
+  id: '/test/files/$id/',
+  path: '/test/files/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/design': typeof DesignRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/api/info': typeof ApiInfoRoute
-  '/api/upload': typeof ApiUploadRoute
-  '/f/$': typeof FSplatRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/info': typeof ApiInfoRouteRoute
+  '/api/upload': typeof ApiUploadRouteRoute
+  '/f/$': typeof FSplatRouteRoute
+  '/design/': typeof DesignIndexRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/sign-up/': typeof SignUpIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/test/files/': typeof TestFilesIndexRoute
+  '/test/upload/': typeof TestUploadIndexRoute
+  '/test/files/$id/': typeof TestFilesIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/design': typeof DesignRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/api/info': typeof ApiInfoRoute
-  '/api/upload': typeof ApiUploadRoute
-  '/f/$': typeof FSplatRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/info': typeof ApiInfoRouteRoute
+  '/api/upload': typeof ApiUploadRouteRoute
+  '/f/$': typeof FSplatRouteRoute
+  '/design': typeof DesignIndexRoute
+  '/sign-in': typeof SignInIndexRoute
+  '/sign-up': typeof SignUpIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/test/files': typeof TestFilesIndexRoute
+  '/test/upload': typeof TestUploadIndexRoute
+  '/test/files/$id': typeof TestFilesIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/design': typeof DesignRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/api/info': typeof ApiInfoRoute
-  '/api/upload': typeof ApiUploadRoute
-  '/f/$': typeof FSplatRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/info': typeof ApiInfoRouteRoute
+  '/api/upload': typeof ApiUploadRouteRoute
+  '/f/$': typeof FSplatRouteRoute
+  '/design/': typeof DesignIndexRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/sign-up/': typeof SignUpIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/test/files/': typeof TestFilesIndexRoute
+  '/test/upload/': typeof TestUploadIndexRoute
+  '/test/files/$id/': typeof TestFilesIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/design'
-    | '/sign-in'
-    | '/sign-up'
     | '/api/info'
     | '/api/upload'
     | '/f/$'
+    | '/design/'
+    | '/sign-in/'
+    | '/sign-up/'
     | '/api/auth/$'
+    | '/test/files/'
+    | '/test/upload/'
+    | '/test/files/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/design'
-    | '/sign-in'
-    | '/sign-up'
     | '/api/info'
     | '/api/upload'
     | '/f/$'
+    | '/design'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/auth/$'
+    | '/test/files'
+    | '/test/upload'
+    | '/test/files/$id'
   id:
     | '__root__'
     | '/'
-    | '/design'
-    | '/sign-in'
-    | '/sign-up'
     | '/api/info'
     | '/api/upload'
     | '/f/$'
+    | '/design/'
+    | '/sign-in/'
+    | '/sign-up/'
     | '/api/auth/$'
+    | '/test/files/'
+    | '/test/upload/'
+    | '/test/files/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DesignRoute: typeof DesignRoute
-  SignInRoute: typeof SignInRoute
-  SignUpRoute: typeof SignUpRoute
-  ApiInfoRoute: typeof ApiInfoRoute
-  ApiUploadRoute: typeof ApiUploadRoute
-  FSplatRoute: typeof FSplatRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInfoRouteRoute: typeof ApiInfoRouteRoute
+  ApiUploadRouteRoute: typeof ApiUploadRouteRoute
+  FSplatRouteRoute: typeof FSplatRouteRoute
+  DesignIndexRoute: typeof DesignIndexRoute
+  SignInIndexRoute: typeof SignInIndexRoute
+  SignUpIndexRoute: typeof SignUpIndexRoute
+  ApiAuthSplatRouteRoute: typeof ApiAuthSplatRouteRoute
+  TestFilesIndexRoute: typeof TestFilesIndexRoute
+  TestUploadIndexRoute: typeof TestUploadIndexRoute
+  TestFilesIdIndexRoute: typeof TestFilesIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -143,53 +182,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/design': {
-      id: '/design'
-      path: '/design'
-      fullPath: '/design'
-      preLoaderRoute: typeof DesignRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/info': {
       id: '/api/info'
       path: '/api/info'
       fullPath: '/api/info'
-      preLoaderRoute: typeof ApiInfoRouteImport
+      preLoaderRoute: typeof ApiInfoRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/upload': {
       id: '/api/upload'
       path: '/api/upload'
       fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteImport
+      preLoaderRoute: typeof ApiUploadRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design/': {
+      id: '/design/'
+      path: '/design'
+      fullPath: '/design/'
+      preLoaderRoute: typeof DesignIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/f/$': {
       id: '/f/$'
       path: '/f/$'
       fullPath: '/f/$'
-      preLoaderRoute: typeof FSplatRouteImport
+      preLoaderRoute: typeof FSplatRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in/': {
+      id: '/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof SignInIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up/': {
+      id: '/sign-up/'
+      path: '/sign-up'
+      fullPath: '/sign-up/'
+      preLoaderRoute: typeof SignUpIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      preLoaderRoute: typeof ApiAuthSplatRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test/files/': {
+      id: '/test/files/'
+      path: '/test/files'
+      fullPath: '/test/files/'
+      preLoaderRoute: typeof TestFilesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test/upload/': {
+      id: '/test/upload/'
+      path: '/test/upload'
+      fullPath: '/test/upload/'
+      preLoaderRoute: typeof TestUploadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test/files/$id/': {
+      id: '/test/files/$id/'
+      path: '/test/files/$id'
+      fullPath: '/test/files/$id/'
+      preLoaderRoute: typeof TestFilesIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -197,13 +257,16 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DesignRoute: DesignRoute,
-  SignInRoute: SignInRoute,
-  SignUpRoute: SignUpRoute,
-  ApiInfoRoute: ApiInfoRoute,
-  ApiUploadRoute: ApiUploadRoute,
-  FSplatRoute: FSplatRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInfoRouteRoute: ApiInfoRouteRoute,
+  ApiUploadRouteRoute: ApiUploadRouteRoute,
+  FSplatRouteRoute: FSplatRouteRoute,
+  DesignIndexRoute: DesignIndexRoute,
+  SignInIndexRoute: SignInIndexRoute,
+  SignUpIndexRoute: SignUpIndexRoute,
+  ApiAuthSplatRouteRoute: ApiAuthSplatRouteRoute,
+  TestFilesIndexRoute: TestFilesIndexRoute,
+  TestUploadIndexRoute: TestUploadIndexRoute,
+  TestFilesIdIndexRoute: TestFilesIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
