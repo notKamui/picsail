@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
 
 const signInSchema = z.object({
@@ -47,16 +48,14 @@ function SignInPage() {
   })
 
   return (
-    <main className="page-wrap flex min-h-screen items-center py-16">
-      <Card className="island-shell mx-auto w-full max-w-md border-(--line) bg-transparent text-(--sea-ink) shadow-none">
+    <main className="flex min-h-svh items-center justify-center px-4 py-16">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <p className="island-kicker">Picsail</p>
-          <CardTitle className="display-title text-3xl font-normal text-(--sea-ink)">
-            Sign in
-          </CardTitle>
-          <CardDescription className="text-(--sea-ink-soft)">
-            Use the email and password for your account.
-          </CardDescription>
+          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+            Picsail
+          </p>
+          <CardTitle className={title({ h: 2 })}>Sign in</CardTitle>
+          <CardDescription>Use the email and password for your account.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -83,7 +82,6 @@ function SignInPage() {
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
                         aria-invalid={isInvalid}
-                        className="h-10 border-(--line) bg-white/80"
                       />
                       {isInvalid ? (
                         <FieldError errors={toFieldErrors(field.state.meta.errors)} />
@@ -107,7 +105,6 @@ function SignInPage() {
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
                         aria-invalid={isInvalid}
-                        className="h-10 border-(--line) bg-white/80"
                       />
                       {isInvalid ? (
                         <FieldError errors={toFieldErrors(field.state.meta.errors)} />
