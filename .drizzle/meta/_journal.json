@@ -15,6 +15,13 @@
       "when": 1793704581091,
       "tag": "0001_gray_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793708045442,
+      "tag": "0002_funny_nekra",
+      "breakpoints": true
     }
   ]
 }
