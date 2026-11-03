@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -119,7 +119,7 @@ function SignInPage() {
             </FieldGroup>
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-3">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form="sign-in-form" className="w-full" disabled={isSubmitting}>
@@ -127,6 +127,9 @@ function SignInPage() {
               </Button>
             )}
           </form.Subscribe>
+          <Button variant="link" asChild className="w-full justify-center px-0">
+            <Link to="/sign-up">Need an account? Create one</Link>
+          </Button>
         </CardFooter>
       </Card>
     </main>
