@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:17
-    container_name: postgres_dev
+    container_name: postgres_picsail_dev
     environment:
       POSTGRES_USER: picsail
       POSTGRES_PASSWORD: picsail
