@@ -59,7 +59,7 @@ export async function uploadImage({
     if (existing[0]) {
       return {
         id: existing[0].id,
-        url: `${env.BASE_URL}${existing[0].id}.${existing[0].extension}`,
+        url: getPublicUrl(existing[0].id, existing[0].extension),
         deleteCode: existing[0].deleteCode,
         sha256,
         size: storedBytes.byteLength,
@@ -96,7 +96,7 @@ export async function uploadImage({
 
     return {
       id: created.id,
-      url: `${env.BASE_URL}${created.id}.${created.extension}`,
+      url: getPublicUrl(created.id, created.extension),
       deleteCode: created.deleteCode,
       sha256,
       size: storedBytes.byteLength,
@@ -114,4 +114,8 @@ async function generateUniqueFileId(tx: Transaction) {
     const current = await tx.select({ id: file.id }).from(file).where(eq(file.id, id)).limit(1)
     if (current.length === 0) return id
   }
+}
+
+function getPublicUrl(id: string, extension: string) {
+  return new URL(`f/${id}.${extension}`, env.BASE_URL).toString()
 }
