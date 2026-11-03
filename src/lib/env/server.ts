@@ -9,6 +9,11 @@ export const env = createEnv({
       .string()
       .default('3000')
       .transform((s) => Number.parseInt(s, 10)),
+    MAX_UPLOAD_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(20 * 1024 * 1024),
     DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().min(1),
     S3_ENDPOINT: z.url(),
