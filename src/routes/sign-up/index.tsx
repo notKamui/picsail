@@ -23,7 +23,7 @@ const signUpSchema = z.object({
   password: z.string().min(8, 'Use at least 8 characters'),
 })
 
-export const Route = createFileRoute('/sign-up')({
+export const Route = createFileRoute('/sign-up/')({
   component: SignUpPage,
 })
 
