@@ -1,15 +1,20 @@
 import { cva } from 'class-variance-authority'
 
-export const title = cva('scroll-m-20 tracking-tight', {
+export const title = cva('scroll-m-20 font-semibold tracking-tight text-balance', {
   variants: {
     h: {
-      1: 'text-4xl font-extrabold lg:text-5xl',
-      2: 'text-3xl font-semibold first:mt-0',
-      3: 'text-2xl font-semibold',
-      4: 'text-xl font-semibold',
+      1: 'text-4xl lg:text-5xl',
+      2: 'text-3xl',
+      3: 'text-2xl',
+      4: 'text-xl',
     },
   },
 })
+
+export const eyebrow = cva('text-xs font-medium tracking-widest text-muted-foreground uppercase')
+
+export const article =
+  'prose prose-headings:font-semibold prose-headings:tracking-tight prose-a:font-medium prose-a:underline prose-a:decoration-border prose-a:underline-offset-4'
 
 export const text = cva('', {
   variants: {
@@ -23,8 +28,9 @@ export const text = cva('', {
       false: '',
     },
     color: {
-      DEFAULT: 'text-primary',
-      secondary: 'text-secondary',
+      DEFAULT: '',
+      primary: 'text-primary',
+      secondary: 'text-secondary-foreground',
       error: 'text-destructive',
     },
   },
@@ -35,15 +41,18 @@ export const text = cva('', {
   },
 })
 
-export const link = cva('underline-offset-4 hover:underline', {
-  variants: {
-    color: {
-      DEFAULT: 'text-blue-400 hover:text-blue-500',
-      primary: 'text-primary hover:text-primary/90',
-      secondary: 'text-secondary hover:text-secondary/90',
+export const link = cva(
+  'font-medium underline decoration-border underline-offset-4 hover:decoration-foreground',
+  {
+    variants: {
+      color: {
+        DEFAULT: 'text-foreground',
+        primary: 'text-primary',
+        secondary: 'text-secondary-foreground',
+      },
+    },
+    defaultVariants: {
+      color: 'DEFAULT',
     },
   },
-  defaultVariants: {
-    color: 'DEFAULT',
-  },
-})
+)

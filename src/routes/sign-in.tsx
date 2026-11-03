@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { title } from '@/components/ui/typography'
+import { eyebrow, title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
 
 const signInSchema = z.object({
@@ -51,9 +51,7 @@ function SignInPage() {
     <main className="flex min-h-svh items-center justify-center px-4 py-16">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-            Picsail
-          </p>
+          <p className={eyebrow()}>Picsail</p>
           <CardTitle className={title({ h: 2 })}>Sign in</CardTitle>
           <CardDescription>Use the email and password for your account.</CardDescription>
         </CardHeader>
