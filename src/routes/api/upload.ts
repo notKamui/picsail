@@ -2,8 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
 import { tryAsync } from '@/lib/try'
 import { validateInput } from '@/lib/validate-input'
-import { $$authed } from '@/server/$$authed'
-import { uploadImage, UnsupportedUploadTypeError, UploadTooLargeError } from '@/server/uploads'
+import { $$authed } from '@/server/auth/$$authed'
+import { uploadImage, UnsupportedUploadTypeError, UploadTooLargeError } from '@/server/files/upload'
 
 const uploadSchema = z.object({
   file: z.custom<File>((value) => value instanceof File, 'Multipart field "file" is required'),
