@@ -7,6 +7,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 import { env } from '@/lib/env/server'
+import { tryAsync } from '@/lib/try'
 
 const s3 = new S3Client({
   region: env.S3_REGION,
@@ -21,20 +22,21 @@ const s3 = new S3Client({
 let bucketReady: Promise<void> | undefined
 
 export function ensureBucket(): Promise<void> {
-  bucketReady ??= createBucketIfMissing().catch((error: unknown) => {
-    bucketReady = undefined
-    throw error
-  })
+  bucketReady ??= (async () => {
+    const [error] = await tryAsync(createBucketIfMissing())
+    if (error) {
+      bucketReady = undefined
+      throw error
+    }
+  })()
   return bucketReady
 }
 
 async function createBucketIfMissing() {
-  try {
-    await s3.send(new HeadBucketCommand({ Bucket: env.S3_BUCKET }))
-  } catch (error) {
-    if (!isMissing(error)) throw error
-    await s3.send(new CreateBucketCommand({ Bucket: env.S3_BUCKET }))
-  }
+  const [error] = await tryAsync(s3.send(new HeadBucketCommand({ Bucket: env.S3_BUCKET })))
+  if (!error) return
+  if (!isMissing(error)) throw error
+  await s3.send(new CreateBucketCommand({ Bucket: env.S3_BUCKET }))
 }
 
 export async function put(key: string, body: Uint8Array, contentType: string) {
@@ -51,17 +53,18 @@ export async function put(key: string, body: Uint8Array, contentType: string) {
 
 export async function open(key: string) {
   await ensureBucket()
-  try {
-    const result = await s3.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }))
-    if (!result.Body) return null
-    return {
-      body: result.Body.transformToWebStream(),
-      contentType: result.ContentType ?? null,
-      contentLength: result.ContentLength ?? null,
-    }
-  } catch (error) {
+  const [error, result] = await tryAsync(
+    s3.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key })),
+  )
+  if (error) {
     if (isMissing(error)) return null
     throw error
+  }
+  if (!result.Body) return null
+  return {
+    body: result.Body.transformToWebStream(),
+    contentType: result.ContentType ?? null,
+    contentLength: result.ContentLength ?? null,
   }
 }
 

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card'
 import { article, eyebrow, text, title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
+import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -22,16 +23,24 @@ export const Route = createFileRoute('/')({
 function Home() {
   const navigate = useNavigate()
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
 
   async function handleSignOut() {
     setIsSigningOut(true)
-    try {
-      await authClient.signOut()
-      await navigate({ to: '/' })
-    } catch {
-      await navigate({ to: '/' })
+    setSignOutError(null)
+    const [requestError, result] = await tryAsync(authClient.signOut())
+    if (requestError) {
+      setSignOutError('Could not sign out. Please try again.')
+      setIsSigningOut(false)
+      return
+    }
+    if (result.error) {
+      setSignOutError(result.error.message ?? 'Could not sign out. Please try again.')
+      setIsSigningOut(false)
+      return
     }
     setIsSigningOut(false)
+    await navigate({ to: '/' })
   }
 
   return (
@@ -63,6 +72,11 @@ function Home() {
             {isSigningOut ? 'Signing out…' : 'Sign out'}
           </Button>
         </CardFooter>
+        {signOutError ? (
+          <p role="alert" className="px-6 pb-6 text-sm text-destructive">
+            {signOutError}
+          </p>
+        ) : null}
       </Card>
     </main>
   )
