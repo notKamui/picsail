@@ -1,5 +1,5 @@
 import { createMiddleware } from '@tanstack/react-start'
-import { getSession } from '@/server/session'
+import { getSession } from '@/server/auth/session'
 
 export const $$authed = createMiddleware().server(async ({ next }) => {
   const session = await getSession()

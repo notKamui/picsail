@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
 import { tryAsync } from '@/lib/try'
 import { validateInput } from '@/lib/validate-input'
-import { FileNotFoundError, getFileInfo } from '@/server/uploads'
+import { FileNotFoundError, getFileInfo } from '@/server/files/info'
 
 const infoQuerySchema = z.object({
   hash: z.string().trim().min(1, 'Missing hash query parameter'),
