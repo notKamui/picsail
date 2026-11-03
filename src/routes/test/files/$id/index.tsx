@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import * as z from 'zod'
 import { Blurhash } from '@/components/blurhash'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,15 +7,13 @@ import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
 import { tryAsync } from '@/lib/try'
-import { getTestFile } from '@/server-functions/files'
+import { deleteFileByCode, getTestFile } from '@/server-functions/files'
 
 export const Route = createFileRoute('/test/files/$id/')({
   head: () => ({ meta: [{ title: 'File detail · Picsail' }] }),
   loader: ({ params }) => getTestFile({ data: { id: params.id } }),
   component: FileDetailTestPage,
 })
-
-const deleteErrorSchema = z.object({ error: z.string() })
 
 function FileDetailTestPage() {
   const file = Route.useLoaderData()
@@ -32,36 +29,18 @@ function FileDetailTestPage() {
     if (!window.confirm('Delete this file permanently? This cannot be undone.')) return
 
     setIsDeleting(true)
-    const [requestError, response] = await tryAsync(
-      fetch(`/api/files/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deleteCode }),
-      }),
-    )
-    if (requestError) {
-      setIsDeleting(false)
-      setDeleteError('Could not reach the delete endpoint.')
-      return
-    }
-
-    const [bodyError, body] = await tryAsync(response.json())
-    if (bodyError) {
-      setIsDeleting(false)
-      setDeleteError(
-        'Could not confirm the delete result. Refresh the page to check whether the file was removed.',
-      )
-      return
-    }
-
-    if (!response.ok) {
-      const parsedError = deleteErrorSchema.safeParse(body)
-      setIsDeleting(false)
-      setDeleteError(parsedError.success ? parsedError.data.error : 'Could not delete the file.')
-      return
-    }
-
+    const [deleteError, result] = await tryAsync(deleteFileByCode({ data: { id, deleteCode } }))
     setIsDeleting(false)
+    if (deleteError) {
+      setDeleteError('Could not delete the file. Please try again.')
+      return
+    }
+
+    if (!result.deleted) {
+      setDeleteError('File not found or delete code is invalid.')
+      return
+    }
+
     await navigate({ to: '/test/files' })
   }
 

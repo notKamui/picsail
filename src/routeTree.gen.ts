@@ -17,7 +17,6 @@ import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
 import { Route as ApiAuthSplatRouteRouteImport } from './routes/api/auth/$/route'
-import { Route as ApiFilesIdRouteRouteImport } from './routes/api/files/$id/route'
 import { Route as TestFilesIndexRouteImport } from './routes/test/files/index'
 import { Route as TestUploadIndexRouteImport } from './routes/test/upload/index'
 import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/index'
@@ -62,11 +61,6 @@ const ApiAuthSplatRouteRoute = ApiAuthSplatRouteRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiFilesIdRouteRoute = ApiFilesIdRouteRouteImport.update({
-  id: '/api/files/$id',
-  path: '/api/files/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TestFilesIndexRoute = TestFilesIndexRouteImport.update({
   id: '/test/files/',
   path: '/test/files/',
@@ -92,7 +86,6 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/files/$id': typeof ApiFilesIdRouteRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
   '/test/files/$id/': typeof TestFilesIdIndexRoute
@@ -106,7 +99,6 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/files/$id': typeof ApiFilesIdRouteRoute
   '/test/files': typeof TestFilesIndexRoute
   '/test/upload': typeof TestUploadIndexRoute
   '/test/files/$id': typeof TestFilesIdIndexRoute
@@ -121,7 +113,6 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/files/$id': typeof ApiFilesIdRouteRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
   '/test/files/$id/': typeof TestFilesIdIndexRoute
@@ -137,7 +128,6 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
-    | '/api/files/$id'
     | '/test/files/'
     | '/test/upload/'
     | '/test/files/$id/'
@@ -151,7 +141,6 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/auth/$'
-    | '/api/files/$id'
     | '/test/files'
     | '/test/upload'
     | '/test/files/$id'
@@ -165,7 +154,6 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
-    | '/api/files/$id'
     | '/test/files/'
     | '/test/upload/'
     | '/test/files/$id/'
@@ -180,7 +168,6 @@ export interface RootRouteChildren {
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
   ApiAuthSplatRouteRoute: typeof ApiAuthSplatRouteRoute
-  ApiFilesIdRouteRoute: typeof ApiFilesIdRouteRoute
   TestFilesIndexRoute: typeof TestFilesIndexRoute
   TestUploadIndexRoute: typeof TestUploadIndexRoute
   TestFilesIdIndexRoute: typeof TestFilesIdIndexRoute
@@ -244,13 +231,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/files/$id': {
-      id: '/api/files/$id'
-      path: '/api/files/$id'
-      fullPath: '/api/files/$id'
-      preLoaderRoute: typeof ApiFilesIdRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/test/files/': {
       id: '/test/files/'
       path: '/test/files'
@@ -284,7 +264,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
   ApiAuthSplatRouteRoute: ApiAuthSplatRouteRoute,
-  ApiFilesIdRouteRoute: ApiFilesIdRouteRoute,
   TestFilesIndexRoute: TestFilesIndexRoute,
   TestUploadIndexRoute: TestUploadIndexRoute,
   TestFilesIdIndexRoute: TestFilesIdIndexRoute,

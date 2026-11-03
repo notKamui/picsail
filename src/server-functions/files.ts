@@ -47,3 +47,24 @@ export const getTestFile = createServerFn({ method: 'GET' })
     const [error, info] = await tryAsync(getFileInfo({ hash: data.id }), [FileNotFoundError])
     return error ? null : info
   })
+
+export const deleteFileByCode = createServerFn({ method: 'POST' })
+  .validator(
+    z.object({
+      id: z
+        .string()
+        .toLowerCase()
+        .regex(/^[a-f0-9]{12}$/),
+      deleteCode: z
+        .string()
+        .toLowerCase()
+        .regex(/^[a-f0-9]{24}$/),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { deleteFile, FileNotFoundOrDeleteCodeMismatchError } =
+      await import('@/server/files/delete')
+    const [error] = await tryAsync(deleteFile(data), [FileNotFoundOrDeleteCodeMismatchError])
+    if (error) return { deleted: false as const }
+    return { deleted: true as const }
+  })
