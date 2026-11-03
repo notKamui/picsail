@@ -15,6 +15,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
+import { tryAsync } from '@/lib/try'
 
 const signUpSchema = z.object({
   name: z.string().min(1, 'Enter your name'),
@@ -40,9 +41,13 @@ function SignUpPage() {
     },
     onSubmit: async ({ value }) => {
       setAuthError(null)
-      const { error } = await authClient.signUp.email(value)
-      if (error) {
-        setAuthError(error.message ?? 'Could not create your account')
+      const [requestError, result] = await tryAsync(authClient.signUp.email(value))
+      if (requestError) {
+        setAuthError('Could not create your account. Please try again.')
+        return
+      }
+      if (result.error) {
+        setAuthError(result.error.message ?? 'Could not create your account')
         return
       }
       await navigate({ to: '/' })

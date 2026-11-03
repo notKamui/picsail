@@ -5,7 +5,6 @@ import sharp from 'sharp'
 import { env } from '@/lib/env/server'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
-import { getSession } from '@/server/session'
 import { storage } from '@/server/storage'
 
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
@@ -16,34 +15,56 @@ const extensionByMime = {
   'image/webp': 'webp',
 } as const
 
-export async function handleUploadRequest(request: Request) {
-  const session = await getSession()
-  const user = session?.user
+export type UploadImageInput = {
+  userId: string
+  file: File
+}
 
-  if (!user) {
-    return jsonResponse({ error: 'Unauthorized' }, 401)
-  }
+export type UploadImageResult = {
+  id: string
+  url: string
+  deleteCode: string
+  sha256: string
+  size: number
+}
 
-  const formData = await request.formData()
-  const submittedFile = formData.get('file')
+export type FileInfoInput = {
+  hash: string
+}
 
-  if (!(submittedFile instanceof File)) {
-    return jsonResponse({ error: 'Multipart field "file" is required' }, 400)
-  }
+export type FileInfoResult = {
+  hash: string
+  type: string
+  mime: string
+  size: number
+  extension: string
+  originalName: string | null
+  createdAt: Date | null
+}
 
-  const mimeType = normalizeMime(submittedFile.type)
+export class UnsupportedUploadTypeError extends Error {}
+
+export class UploadTooLargeError extends Error {}
+
+export class FileNotFoundError extends Error {}
+
+export async function uploadImage({
+  userId,
+  file: uploadedFile,
+}: UploadImageInput): Promise<UploadImageResult> {
+  const mimeType = normalizeMime(uploadedFile.type)
+
   if (!allowedMimeTypes.has(mimeType)) {
-    return jsonResponse({ error: 'Only JPEG, PNG, GIF, and WebP uploads are supported' }, 400)
+    throw new UnsupportedUploadTypeError('Only JPEG, PNG, GIF, and WebP uploads are supported')
   }
 
-  if (submittedFile.size > env.MAX_UPLOAD_BYTES) {
-    return jsonResponse(
-      { error: `Upload exceeds the ${Math.round(env.MAX_UPLOAD_BYTES / 1024 / 1024)} MB limit` },
-      413,
+  if (uploadedFile.size > env.MAX_UPLOAD_BYTES) {
+    throw new UploadTooLargeError(
+      `Upload exceeds the ${Math.round(env.MAX_UPLOAD_BYTES / 1024 / 1024)} MB limit`,
     )
   }
 
-  const sourceBytes = new Uint8Array(await submittedFile.arrayBuffer())
+  const sourceBytes = new Uint8Array(await uploadedFile.arrayBuffer())
   const storedBytes = await prepareStoredImageBytes(sourceBytes, mimeType)
   const sha256 = createHash('sha256').update(storedBytes).digest('hex')
 
@@ -51,7 +72,7 @@ export async function handleUploadRequest(request: Request) {
     const existing = await tx
       .select()
       .from(file)
-      .where(and(eq(file.ownerId, user.id), eq(file.blobSha256, sha256)))
+      .where(and(eq(file.ownerId, userId), eq(file.blobSha256, sha256)))
       .limit(1)
 
     if (existing[0]) {
@@ -61,7 +82,7 @@ export async function handleUploadRequest(request: Request) {
         deleteCode: existing[0].deleteCode,
         sha256,
         size: storedBytes.byteLength,
-      }
+      } satisfies UploadImageResult
     }
 
     const extension = extensionByMime[mimeType as keyof typeof extensionByMime]
@@ -90,12 +111,12 @@ export async function handleUploadRequest(request: Request) {
       .insert(file)
       .values({
         id,
-        ownerId: user.id,
+        ownerId: userId,
         blobSha256: sha256,
         extension,
         kind: 'image',
         deleteCode,
-        originalName: submittedFile.name || null,
+        originalName: uploadedFile.name || null,
       })
       .returning()
 
@@ -105,28 +126,20 @@ export async function handleUploadRequest(request: Request) {
       deleteCode: created[0].deleteCode,
       sha256,
       size: storedBytes.byteLength,
-    }
+    } satisfies UploadImageResult
   })
 
   await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
 
-  return jsonResponse(result)
+  return result
 }
 
-export async function handleInfoRequest(request: Request) {
-  const url = new URL(request.url)
-  const hash = url.searchParams.get('hash')
-
-  if (!hash) {
-    return jsonResponse({ error: 'Missing hash query parameter' }, 400)
-  }
-
+export async function getFileInfo({ hash }: FileInfoInput): Promise<FileInfoResult> {
   const chosenFile = await db
     .select({
       id: file.id,
       kind: file.kind,
       extension: file.extension,
-      blobSha256: file.blobSha256,
       originalName: file.originalName,
       createdAt: file.createdAt,
       byteSize: blob.byteSize,
@@ -138,12 +151,12 @@ export async function handleInfoRequest(request: Request) {
     .limit(1)
 
   if (!chosenFile[0]) {
-    return jsonResponse({ error: 'File not found' }, 404)
+    throw new FileNotFoundError('File not found')
   }
 
   const row = chosenFile[0]
 
-  return jsonResponse({
+  return {
     hash: row.id,
     type: row.kind,
     mime: row.mime,
@@ -151,7 +164,7 @@ export async function handleInfoRequest(request: Request) {
     extension: row.extension,
     originalName: row.originalName,
     createdAt: row.createdAt,
-  })
+  }
 }
 
 async function prepareStoredImageBytes(sourceBytes: Uint8Array, mimeType: string) {
@@ -173,32 +186,19 @@ async function prepareStoredImageBytes(sourceBytes: Uint8Array, mimeType: string
 }
 
 async function calculateBlurhash(imageBytes: Uint8Array) {
-  try {
-    const { data, info } = await sharp(Buffer.from(imageBytes))
-      .rotate()
-      .resize(32, 32, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true })
+  const { data, info } = await sharp(Buffer.from(imageBytes))
+    .rotate()
+    .resize(32, 32, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
-    return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4)
-  } catch {
-    return null
-  }
+  return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4)
 }
 
 function normalizeMime(mimeType: string) {
   return mimeType.toLowerCase().split(';', 1)[0] || 'application/octet-stream'
-}
-
-function jsonResponse(data: unknown, status = 200) {
-  return Response.json(data, {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-  })
 }
