@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, lazyPlugins } from 'vite-plus'
 import fmt from './oxfmt.config.ts'
 import lint from './oxlint.config.ts'
+import { ensureBucketPlugin } from './plugins/ensure-bucket.ts'
 
 const config = defineConfig({
   staged: {
@@ -24,6 +25,7 @@ const config = defineConfig({
       },
     }),
     react(),
+    ensureBucketPlugin(),
   ]),
   run: {
     cache: {
