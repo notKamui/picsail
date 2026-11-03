@@ -11,6 +11,7 @@ export type FileInfoResult = {
   type: string
   mime: string
   size: number
+  blurhash: string | null
   extension: string
   originalName: string | null
   createdAt: Date | null
@@ -28,6 +29,7 @@ export async function getFileInfo({ hash }: FileInfoInput): Promise<FileInfoResu
       createdAt: file.createdAt,
       byteSize: blob.byteSize,
       mime: blob.mime,
+      blurhash: blob.blurhash,
     })
     .from(file)
     .innerJoin(blob, eq(blob.sha256, file.blobSha256))
@@ -43,6 +45,7 @@ export async function getFileInfo({ hash }: FileInfoInput): Promise<FileInfoResu
     type: chosenFile.kind,
     mime: chosenFile.mime,
     size: Number(chosenFile.byteSize),
+    blurhash: chosenFile.blurhash,
     extension: chosenFile.extension,
     originalName: chosenFile.originalName,
     createdAt: chosenFile.createdAt,

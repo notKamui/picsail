@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Blurhash } from '@/components/blurhash'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { eyebrow, title } from '@/components/ui/typography'
@@ -50,11 +51,24 @@ function FileDetailTestPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {file.mime.startsWith('image/') ? (
-            <img
-              src={publicUrl}
-              alt={file.originalName || file.hash}
-              className="max-h-[70svh] max-w-full border border-border object-contain"
-            />
+            <>
+              {file.blurhash ? (
+                <section className="space-y-3">
+                  <h2 className="font-medium">Blurhash preview</h2>
+                  <Blurhash
+                    hash={file.blurhash}
+                    width="12rem"
+                    height="12rem"
+                    className="max-w-full rounded-md border border-border"
+                  />
+                </section>
+              ) : null}
+              <img
+                src={publicUrl}
+                alt={file.originalName || file.hash}
+                className="max-h-[70svh] max-w-full border border-border object-contain"
+              />
+            </>
           ) : null}
           <dl className="grid gap-3 text-sm sm:grid-cols-[max-content_1fr]">
             <dt className="font-medium">ID</dt>
