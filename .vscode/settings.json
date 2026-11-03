@@ -1,0 +1,80 @@
+{
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "json.schemaDownload.enable": true,
+
+  "auto-close-tag.disableOnLanguage": ["typescript", "typescriptreact"],
+
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.classAttributes": ["classnames", "classNames", "className", "clsx"],
+  "tailwindCSS.experimental.classRegex": [
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+
+  "[routeTree.gen.ts]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll": "never"
+    }
+  },
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
+  },
+
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "oxc.disableNestedConfig": true,
+  "oxc.fmt.disableNestedConfig": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    ".env": ".env.*",
+    "vite.config.ts": "oxfmt.config.ts, oxlint.config.ts, tsconfig.json, .editorconfig",
+    "tsconfig.json": "tsconfig.*.json",
+    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .nvmrc",
+    "README.md": "LICENSE"
+  },
+
+  "prettier.enable": false,
+  "eslint.enable": false,
+  "biome.enabled": false
+}

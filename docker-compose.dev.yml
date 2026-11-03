@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres_dev
+    environment:
+      POSTGRES_USER: picsail
+      POSTGRES_PASSWORD: picsail
+      POSTGRES_DB: picsail
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
