@@ -10,12 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
-import { Route as ApiAuthSplatRouteRouteImport } from './routes/api/auth/$/route'
-import { Route as ApiOpenapiSplatRouteImport } from './routes/api/openapi.$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 import { Route as TestFilesIndexRouteImport } from './routes/test/files/index'
 import { Route as TestUploadIndexRouteImport } from './routes/test/upload/index'
@@ -24,6 +24,11 @@ import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/in
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesignIndexRoute = DesignIndexRouteImport.update({
@@ -46,14 +51,9 @@ const SignUpIndexRoute = SignUpIndexRouteImport.update({
   path: '/sign-up/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRouteRoute = ApiAuthSplatRouteRouteImport.update({
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiOpenapiSplatRoute = ApiOpenapiSplatRouteImport.update({
-  id: '/api/openapi/$',
-  path: '/api/openapi/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
@@ -80,11 +80,11 @@ const TestFilesIdIndexRoute = TestFilesIdIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
+  '/api/$': typeof ApiSplatRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/openapi/$': typeof ApiOpenapiSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
@@ -93,11 +93,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
+  '/api/$': typeof ApiSplatRoute
   '/design': typeof DesignIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/openapi/$': typeof ApiOpenapiSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files': typeof TestFilesIndexRoute
   '/test/upload': typeof TestUploadIndexRoute
@@ -107,11 +107,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
+  '/api/$': typeof ApiSplatRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRouteRoute
-  '/api/openapi/$': typeof ApiOpenapiSplatRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
@@ -122,11 +122,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/f/$'
+    | '/api/$'
     | '/design/'
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
-    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files/'
     | '/test/upload/'
@@ -135,11 +135,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/f/$'
+    | '/api/$'
     | '/design'
     | '/sign-in'
     | '/sign-up'
     | '/api/auth/$'
-    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files'
     | '/test/upload'
@@ -148,11 +148,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/f/$'
+    | '/api/$'
     | '/design/'
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
-    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files/'
     | '/test/upload/'
@@ -162,11 +162,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FSplatRouteRoute: typeof FSplatRouteRoute
+  ApiSplatRoute: typeof ApiSplatRoute
   DesignIndexRoute: typeof DesignIndexRoute
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
-  ApiAuthSplatRouteRoute: typeof ApiAuthSplatRouteRoute
-  ApiOpenapiSplatRoute: typeof ApiOpenapiSplatRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
   TestFilesIndexRoute: typeof TestFilesIndexRoute
   TestUploadIndexRoute: typeof TestUploadIndexRoute
@@ -180,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/design/': {
@@ -214,14 +221,7 @@ declare module '@tanstack/react-router' {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/openapi/$': {
-      id: '/api/openapi/$'
-      path: '/api/openapi/$'
-      fullPath: '/api/openapi/$'
-      preLoaderRoute: typeof ApiOpenapiSplatRouteImport
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/rpc/$': {
@@ -258,11 +258,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FSplatRouteRoute: FSplatRouteRoute,
+  ApiSplatRoute: ApiSplatRoute,
   DesignIndexRoute: DesignIndexRoute,
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
-  ApiAuthSplatRouteRoute: ApiAuthSplatRouteRoute,
-  ApiOpenapiSplatRoute: ApiOpenapiSplatRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
   TestFilesIndexRoute: TestFilesIndexRoute,
   TestUploadIndexRoute: TestUploadIndexRoute,
