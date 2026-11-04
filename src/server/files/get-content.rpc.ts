@@ -2,7 +2,7 @@ import { openapi } from '@orpc/openapi'
 import { ORPCError, os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
 import * as z from 'zod'
-import { db } from '@/server/db'
+import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
@@ -47,7 +47,27 @@ export default os
   .handler(async ({ input }) => getFileContentResponse(input))
 
 export async function getFileContentResponse(input: { id: string; extension: string }) {
-  const [row] = await db
+  const fileContent = await findFileContent(input.id)
+  if (!fileContent || fileContent.extension !== input.extension) {
+    throw new ORPCError('NOT_FOUND')
+  }
+
+  const object = await storage.open(`blobs/${fileContent.sha256}`)
+  if (!object) throw new ORPCError('NOT_FOUND')
+
+  return {
+    status: 200 as const,
+    headers: {
+      'content-type': fileContent.mime,
+      'content-length': String(fileContent.byteSize),
+      'x-content-type-options': 'nosniff',
+    },
+    body: object.body,
+  }
+}
+
+async function findFileContent(id: string) {
+  return db
     .select({
       extension: file.extension,
       sha256: blob.sha256,
@@ -56,23 +76,6 @@ export async function getFileContentResponse(input: { id: string; extension: str
     })
     .from(file)
     .innerJoin(blob, eq(blob.sha256, file.blobSha256))
-    .where(eq(file.id, input.id))
-    .limit(1)
-
-  if (!row || row.extension !== input.extension) {
-    throw new ORPCError('NOT_FOUND')
-  }
-
-  const object = await storage.open(`blobs/${row.sha256}`)
-  if (!object) throw new ORPCError('NOT_FOUND')
-
-  return {
-    status: 200 as const,
-    headers: {
-      'content-type': row.mime,
-      'content-length': String(row.byteSize),
-      'x-content-type-options': 'nosniff',
-    },
-    body: object.body,
-  }
+    .where(eq(file.id, id))
+    .then(takeUniqueOrNull)
 }
