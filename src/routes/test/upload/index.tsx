@@ -15,9 +15,8 @@ export const Route = createFileRoute('/test/upload/')({
 })
 
 type UploadResult = {
-  id: string
+  hash: string
   url: string
-  deleteCode: string
   size: number
 }
 
@@ -57,7 +56,7 @@ function UploadTestPage() {
       setError(result.message)
       return
     }
-    setUpload(result.upload)
+    setUpload(result)
     await queryClient.invalidateQueries({ queryKey: orpc.files.list.key() })
   }
 
@@ -107,12 +106,11 @@ function UploadTestPage() {
           {upload ? (
             <section className="mt-6 space-y-3 border-t border-border pt-6">
               <h2 className="font-serif text-xl font-semibold">Upload complete</h2>
-              <p className="text-sm">ID: {upload.id}</p>
+              <p className="text-sm">Hash: {upload.hash}</p>
               <p className="text-sm">Size: {upload.size.toLocaleString()} bytes</p>
-              <p className="text-sm break-all">Delete code: {upload.deleteCode}</p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link to="/test/files/$id" params={{ id: upload.id }}>
+                  <Link to="/test/files/$id" params={{ id: upload.hash }}>
                     View file
                   </Link>
                 </Button>

@@ -1,17 +1,18 @@
 import { openapi } from '@orpc/openapi'
-import { os } from '@orpc/server'
-import { and, count, eq } from 'drizzle-orm'
+import { ORPCError, os } from '@orpc/server'
+import { count, eq } from 'drizzle-orm'
 import * as z from 'zod'
+import { getSession, isAdmin } from '@/server/auth/session'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-const deleteFileByCode = os
+const deleteFile = os
   .meta(
     openapi({
       method: 'DELETE',
       path: '/files/{id}',
-      summary: 'Delete a file using its delete code',
+      summary: 'Delete a file owned by the current user or an admin',
       tags: ['Files'],
     }),
   )
@@ -21,20 +22,30 @@ const deleteFileByCode = os
         .string()
         .toLowerCase()
         .regex(/^[a-f0-9]{12}$/),
-      deleteCode: z
-        .string()
-        .toLowerCase()
-        .regex(/^[a-f0-9]{24}$/),
     }),
   )
   .handler(async ({ input }) => {
+    const session = await getSession()
+    if (!session?.user) throw new ORPCError('UNAUTHORIZED')
+
     const result = await db.transaction(async (tx) => {
+      const [existingFile] = await tx
+        .select({ ownerId: file.ownerId, blobSha256: file.blobSha256 })
+        .from(file)
+        .where(eq(file.id, input.id))
+        .limit(1)
+
+      if (!existingFile) throw new ORPCError('NOT_FOUND')
+      if (existingFile.ownerId !== session.user.id && !isAdmin(session.user.role)) {
+        throw new ORPCError('FORBIDDEN')
+      }
+
       const [deletedFile] = await tx
         .delete(file)
-        .where(and(eq(file.id, input.id), eq(file.deleteCode, input.deleteCode)))
+        .where(eq(file.id, input.id))
         .returning({ blobSha256: file.blobSha256 })
 
-      if (!deletedFile) return { deleted: false as const }
+      if (!deletedFile) throw new ORPCError('NOT_FOUND')
 
       const [remainingFiles] = await tx
         .select({ count: count() })
@@ -54,4 +65,4 @@ const deleteFileByCode = os
     return { deleted: result.deleted }
   })
 
-export default deleteFileByCode
+export default deleteFile

@@ -100,7 +100,7 @@ function DesignPage() {
             <ul>
               <li>Still images</li>
               <li>Public hash URLs</li>
-              <li>A delete code for each file</li>
+              <li>Owner and admin file deletion</li>
             </ul>
           </div>
         </Section>

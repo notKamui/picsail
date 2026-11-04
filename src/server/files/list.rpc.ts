@@ -41,7 +41,7 @@ const listOwnedFiles = os
       files: rows.map((row) => ({
         ...row,
         size: Number(row.byteSize),
-        publicUrl: new URL(`f/${row.id}.${row.extension}`, env.BASE_URL).toString(),
+        publicUrl: new URL(`/f/${row.id}.${row.extension}`, env.BASE_URL).toString(),
       })),
     }
   })

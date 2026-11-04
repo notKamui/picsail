@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { Blurhash } from '@/components/blurhash'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { Field, FieldError } from '@/components/ui/field'
 import { eyebrow, title } from '@/components/ui/typography'
 import { orpc } from '@/lib/orpc'
 import { tryAsync } from '@/lib/try'
@@ -31,7 +30,6 @@ function FileDetailTestPage() {
       },
     }),
   )
-  const [deleteCode, setDeleteCode] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function handleDelete(event: React.SubmitEvent<HTMLFormElement>) {
@@ -39,14 +37,14 @@ function FileDetailTestPage() {
     setDeleteError(null)
     if (!window.confirm('Delete this file permanently? This cannot be undone.')) return
 
-    const [deleteError, result] = await tryAsync(deleteMutation.mutateAsync({ id, deleteCode }))
+    const [deleteError, result] = await tryAsync(deleteMutation.mutateAsync({ id }))
     if (deleteError) {
       setDeleteError('Could not delete the file. Please try again.')
       return
     }
 
     if (!result.deleted) {
-      setDeleteError('File not found or delete code is invalid.')
+      setDeleteError('Could not delete the file.')
       return
     }
 
@@ -128,22 +126,9 @@ function FileDetailTestPage() {
             <div className="space-y-1">
               <h2 className="font-medium">Delete file</h2>
               <p className="text-sm text-muted-foreground">
-                This permanently removes the file. Enter the delete code provided when it was
-                uploaded.
+                This permanently removes the file. Only its owner or an admin can delete it.
               </p>
             </div>
-            <Field>
-              <FieldLabel htmlFor="delete-code">Delete code</FieldLabel>
-              <Input
-                id="delete-code"
-                type="password"
-                autoComplete="off"
-                required
-                value={deleteCode}
-                onChange={(event) => setDeleteCode(event.currentTarget.value)}
-              />
-              <FieldDescription>The code is case-insensitive.</FieldDescription>
-            </Field>
             {deleteError ? (
               <Field data-invalid>
                 <FieldError>{deleteError}</FieldError>

@@ -21,7 +21,6 @@ export const file = pgTable(
       .references(() => blob.sha256),
     extension: text('extension').notNull(),
     kind: text('kind').notNull(),
-    deleteCode: text('delete_code').notNull(),
     originalName: text('original_name'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
