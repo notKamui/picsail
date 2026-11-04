@@ -6,7 +6,7 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-export const getFileContent = os
+const getFileContent = os
   .meta(
     openapi({
       method: 'GET',
@@ -74,3 +74,5 @@ export const getFileContent = os
       body: object.body,
     }
   })
+
+export default getFileContent

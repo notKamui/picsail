@@ -2,7 +2,7 @@ import { onError } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
 import { createFileRoute } from '@tanstack/react-router'
 import { createTmpFileUploadPlugin, normalizeFetchRequest } from '@/server/orpc/request'
-import { router } from '@/server/orpc/router'
+import { router } from '@/server/orpc/router.gen'
 
 const handler = new RPCHandler(router, {
   plugins: [createTmpFileUploadPlugin()],
