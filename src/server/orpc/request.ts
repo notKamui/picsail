@@ -1,9 +1,17 @@
-import { BodyLimitPlugin } from '@orpc/server/fetch'
+import { TmpFileUploadHandlerPlugin } from '@orpc/node'
 import { env } from '@/lib/env/server'
 
-export const uploadBodyLimitPlugin = new BodyLimitPlugin({
-  maxBodySize: env.MAX_UPLOAD_BYTES + 64 * 1024,
-})
+export function createTmpFileUploadPlugin() {
+  const overhead = 64 * 1024
+
+  return new TmpFileUploadHandlerPlugin({
+    maxBodySize: {
+      memory: overhead,
+      file: env.MAX_UPLOAD_BYTES,
+      stream: env.MAX_UPLOAD_BYTES + overhead,
+    },
+  })
+}
 
 export function normalizeFetchRequest(request: Request) {
   const init: RequestInit & { duplex?: 'half' } = {

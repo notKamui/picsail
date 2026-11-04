@@ -1,3 +1,4 @@
+import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { and, count, eq } from 'drizzle-orm'
 import * as z from 'zod'
@@ -6,12 +7,14 @@ import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
 export const deleteFileByCode = os
-  .route({
-    method: 'DELETE',
-    path: '/files/{id}',
-    summary: 'Delete a file using its delete code',
-    tags: ['Files'],
-  })
+  .meta(
+    openapi({
+      method: 'DELETE',
+      path: '/files/{id}',
+      summary: 'Delete a file using its delete code',
+      tags: ['Files'],
+    }),
+  )
   .input(
     z.object({
       id: z
