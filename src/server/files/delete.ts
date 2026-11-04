@@ -1,4 +1,7 @@
+import { os } from '@orpc/server'
 import { and, count, eq } from 'drizzle-orm'
+import * as z from 'zod'
+import { tryAsync } from '@/lib/try'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
@@ -9,6 +12,25 @@ export type DeleteFileInput = {
 }
 
 export class FileNotFoundOrDeleteCodeMismatchError extends Error {}
+
+export const deleteFileByCode = os
+  .input(
+    z.object({
+      id: z
+        .string()
+        .toLowerCase()
+        .regex(/^[a-f0-9]{12}$/),
+      deleteCode: z
+        .string()
+        .toLowerCase()
+        .regex(/^[a-f0-9]{24}$/),
+    }),
+  )
+  .handler(async ({ input }) => {
+    const [error] = await tryAsync(deleteFile(input), [FileNotFoundOrDeleteCodeMismatchError])
+    if (error) return { deleted: false as const }
+    return { deleted: true as const }
+  })
 
 export async function deleteFile({ id, deleteCode }: DeleteFileInput) {
   const blobToDelete = await db.transaction(async (tx) => {

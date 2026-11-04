@@ -10,8 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiInfoRouteRouteImport } from './routes/api/info/route'
-import { Route as ApiUploadRouteRouteImport } from './routes/api/upload/route'
 import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
@@ -25,16 +23,6 @@ import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/in
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiInfoRouteRoute = ApiInfoRouteRouteImport.update({
-  id: '/api/info',
-  path: '/api/info',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiUploadRouteRoute = ApiUploadRouteRouteImport.update({
-  id: '/api/upload',
-  path: '/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesignIndexRoute = DesignIndexRouteImport.update({
@@ -85,8 +73,6 @@ const TestFilesIdIndexRoute = TestFilesIdIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/info': typeof ApiInfoRouteRoute
-  '/api/upload': typeof ApiUploadRouteRoute
   '/f/$': typeof FSplatRouteRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
@@ -99,8 +85,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/info': typeof ApiInfoRouteRoute
-  '/api/upload': typeof ApiUploadRouteRoute
   '/f/$': typeof FSplatRouteRoute
   '/design': typeof DesignIndexRoute
   '/sign-in': typeof SignInIndexRoute
@@ -114,8 +98,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/info': typeof ApiInfoRouteRoute
-  '/api/upload': typeof ApiUploadRouteRoute
   '/f/$': typeof FSplatRouteRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
@@ -130,8 +112,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/api/info'
-    | '/api/upload'
     | '/f/$'
     | '/design/'
     | '/sign-in/'
@@ -144,8 +124,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/info'
-    | '/api/upload'
     | '/f/$'
     | '/design'
     | '/sign-in'
@@ -158,8 +136,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/api/info'
-    | '/api/upload'
     | '/f/$'
     | '/design/'
     | '/sign-in/'
@@ -173,8 +149,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiInfoRouteRoute: typeof ApiInfoRouteRoute
-  ApiUploadRouteRoute: typeof ApiUploadRouteRoute
   FSplatRouteRoute: typeof FSplatRouteRoute
   DesignIndexRoute: typeof DesignIndexRoute
   SignInIndexRoute: typeof SignInIndexRoute
@@ -193,20 +167,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/info': {
-      id: '/api/info'
-      path: '/api/info'
-      fullPath: '/api/info'
-      preLoaderRoute: typeof ApiInfoRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/upload': {
-      id: '/api/upload'
-      path: '/api/upload'
-      fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/design/': {
@@ -277,8 +237,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiInfoRouteRoute: ApiInfoRouteRoute,
-  ApiUploadRouteRoute: ApiUploadRouteRoute,
   FSplatRouteRoute: FSplatRouteRoute,
   DesignIndexRoute: DesignIndexRoute,
   SignInIndexRoute: SignInIndexRoute,
