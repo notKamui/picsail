@@ -23,6 +23,12 @@ export type FileInfoResult = {
 export class FileNotFoundError extends Error {}
 
 export const getTestFile = os
+  .route({
+    method: 'GET',
+    path: '/files/{id}',
+    summary: 'Get file metadata',
+    tags: ['Files'],
+  })
   .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
   .handler(async ({ input }) => {
     const [error, info] = await tryAsync(getFileInfo({ hash: input.id }), [FileNotFoundError])

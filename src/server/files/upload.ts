@@ -34,7 +34,30 @@ export class UnsupportedUploadTypeError extends Error {}
 export class UploadTooLargeError extends Error {}
 
 export const uploadImageForUser = os
-  .input(z.object({ file: z.custom<File>((value) => value instanceof File) }))
+  .route({
+    method: 'POST',
+    path: '/files/upload',
+    summary: 'Upload an image',
+    tags: ['Files'],
+    spec: (operation) => ({
+      ...operation,
+      requestBody: {
+        required: true,
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: {
+                file: { type: 'string', format: 'binary' },
+              },
+              required: ['file'],
+            },
+          },
+        },
+      },
+    }),
+  })
+  .input(z.object({ file: z.file() }))
   .handler(async ({ input }) => {
     const uploadedFile = input.file
     if (uploadedFile.size === 0) {
