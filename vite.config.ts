@@ -20,13 +20,7 @@ const config = defineConfig({
   plugins: lazyPlugins(() => [
     devtools(),
     tailwindcss(),
-    tanstackStart({
-      importProtection: {
-        client: {
-          files: ['src/server/**/*.ts'],
-        },
-      },
-    }),
+    tanstackStart(),
     react(),
     ensureBucketPlugin(),
   ]),

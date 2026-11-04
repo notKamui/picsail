@@ -6,7 +6,7 @@ export function ensureBucketPlugin(): Plugin {
     apply: 'serve',
     configureServer(server) {
       void server
-        .ssrLoadModule('/src/server/storage.ts')
+        .ssrLoadModule('/src/server/storage/index.ts')
         .then((mod) => {
           const storageModule = mod as { ensureBucket: () => Promise<void> }
           return storageModule.ensureBucket()

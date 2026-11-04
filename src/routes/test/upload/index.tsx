@@ -1,12 +1,12 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
-import { uploadImageForUser } from '@/functions/files'
+import { orpc } from '@/lib/orpc'
 import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/test/upload/')({
@@ -24,8 +24,8 @@ type UploadResult = {
 function UploadTestPage() {
   const [upload, setUpload] = useState<UploadResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const uploadImage = useServerFn(uploadImageForUser)
+  const queryClient = useQueryClient()
+  const uploadMutation = useMutation(orpc.files.uploadImage.mutationOptions())
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -33,9 +33,13 @@ function UploadTestPage() {
     setUpload(null)
 
     const formData = new FormData(event.currentTarget)
-    setIsUploading(true)
-    const [requestError, result] = await tryAsync(uploadImage({ data: formData }))
-    setIsUploading(false)
+    const file = formData.get('file')
+    if (!(file instanceof File)) {
+      setError('Choose a file to upload.')
+      return
+    }
+
+    const [requestError, result] = await tryAsync(uploadMutation.mutateAsync({ file }))
     if (requestError) {
       setError(requestError.message || 'Could not complete the upload.')
       return
@@ -54,6 +58,7 @@ function UploadTestPage() {
       return
     }
     setUpload(result.upload)
+    await queryClient.invalidateQueries({ queryKey: orpc.files.listOwned.key() })
   }
 
   return (
@@ -93,8 +98,8 @@ function UploadTestPage() {
                   <FieldError>{error}</FieldError>
                 </Field>
               ) : null}
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? 'Uploading…' : 'Upload'}
+              <Button type="submit" disabled={uploadMutation.isPending}>
+                {uploadMutation.isPending ? 'Uploading…' : 'Upload'}
               </Button>
             </FieldGroup>
           </form>

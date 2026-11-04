@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Blurhash } from '@/components/blurhash'
@@ -6,31 +7,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
-import { deleteFileByCode, getTestFile } from '@/functions/files'
+import { orpc } from '@/lib/orpc'
 import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/test/files/$id/')({
   head: () => ({ meta: [{ title: 'File detail · Picsail' }] }),
-  loader: ({ params }) => getTestFile({ data: { id: params.id } }),
+  loader: ({ context, params }) =>
+    context.queryClient.query(orpc.files.getTest.queryOptions({ input: { id: params.id } })),
   component: FileDetailTestPage,
 })
 
 function FileDetailTestPage() {
-  const file = Route.useLoaderData()
   const { id } = Route.useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { data: file } = useSuspenseQuery(orpc.files.getTest.queryOptions({ input: { id } }))
+  const deleteMutation = useMutation(
+    orpc.files.deleteByCode.mutationOptions({
+      onSuccess: async (result) => {
+        if (result.deleted) {
+          await queryClient.invalidateQueries({ queryKey: orpc.files.listOwned.key() })
+        }
+      },
+    }),
+  )
   const [deleteCode, setDeleteCode] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   async function handleDelete(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setDeleteError(null)
     if (!window.confirm('Delete this file permanently? This cannot be undone.')) return
 
-    setIsDeleting(true)
-    const [deleteError, result] = await tryAsync(deleteFileByCode({ data: { id, deleteCode } }))
-    setIsDeleting(false)
+    const [deleteError, result] = await tryAsync(deleteMutation.mutateAsync({ id, deleteCode }))
     if (deleteError) {
       setDeleteError('Could not delete the file. Please try again.')
       return
@@ -140,8 +149,8 @@ function FileDetailTestPage() {
                 <FieldError>{deleteError}</FieldError>
               </Field>
             ) : null}
-            <Button type="submit" variant="destructive" disabled={isDeleting}>
-              {isDeleting ? 'Deleting…' : 'Delete file'}
+            <Button type="submit" variant="destructive" disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? 'Deleting…' : 'Delete file'}
             </Button>
           </form>
         </CardContent>
