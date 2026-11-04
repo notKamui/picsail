@@ -2,6 +2,7 @@ import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { desc, eq } from 'drizzle-orm'
 import { env } from '@/lib/env/server'
+import { publicFileUrl } from '@/lib/public-file-url'
 import { getSession } from '@/server/auth/session'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
@@ -41,7 +42,7 @@ export default os
       files: rows.map((row) => ({
         ...row,
         size: Number(row.byteSize),
-        publicUrl: new URL(`/f/${row.id}.${row.extension}`, env.BASE_URL).toString(),
+        publicUrl: publicFileUrl(row.id, row.extension, env.BASE_URL),
       })),
     }
   })
