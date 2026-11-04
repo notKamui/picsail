@@ -66,7 +66,9 @@ function Home() {
             <Link to="/test/upload">Test upload</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to="/test/files">Test files</Link>
+            <Link to="/test/files" search={{ page: 1, pageSize: 20 }}>
+              Test files
+            </Link>
           </Button>
           <Button asChild>
             <Link to="/sign-in">Sign in</Link>

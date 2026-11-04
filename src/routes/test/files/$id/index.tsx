@@ -49,7 +49,7 @@ function FileDetailTestPage() {
       return
     }
 
-    await navigate({ to: '/test/files' })
+    await navigate({ to: '/test/files', search: { page: 1, pageSize: 20 } })
   }
 
   if (!file) {
@@ -57,7 +57,9 @@ function FileDetailTestPage() {
       <main className="mx-auto flex min-h-svh max-w-3xl flex-col gap-6 px-6 py-12">
         <h1 className={title({ h: 1 })}>File not found</h1>
         <Button variant="outline" asChild>
-          <Link to="/test/files">Back to files</Link>
+          <Link to="/test/files" search={{ page: 1, pageSize: 20 }}>
+            Back to files
+          </Link>
         </Button>
       </main>
     )
@@ -75,7 +77,9 @@ function FileDetailTestPage() {
           </h1>
         </div>
         <Button variant="outline" asChild>
-          <Link to="/test/files">Back to files</Link>
+          <Link to="/test/files" search={{ page: 1, pageSize: 20 }}>
+            Back to files
+          </Link>
         </Button>
       </header>
 
