@@ -6,7 +6,7 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-const getFileContent = os
+export default os
   .meta(
     openapi({
       method: 'GET',
@@ -76,5 +76,3 @@ export async function getFileContentResponse(input: { id: string; extension: str
     body: object.body,
   }
 }
-
-export default getFileContent

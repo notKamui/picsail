@@ -7,7 +7,7 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-const deleteFile = os
+export default os
   .meta(
     openapi({
       method: 'DELETE',
@@ -64,5 +64,3 @@ const deleteFile = os
 
     return { deleted: result.deleted }
   })
-
-export default deleteFile

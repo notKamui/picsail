@@ -6,7 +6,7 @@ import { getSession } from '@/server/auth/session'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
-const listOwnedFiles = os
+export default os
   .meta(
     openapi({
       method: 'GET',
@@ -45,5 +45,3 @@ const listOwnedFiles = os
       })),
     }
   })
-
-export default listOwnedFiles
