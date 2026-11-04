@@ -1,3 +1,4 @@
+import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
 import * as z from 'zod'
@@ -5,12 +6,14 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
 export const getFileMetadata = os
-  .route({
-    method: 'GET',
-    path: '/files/{id}',
-    summary: 'Get file metadata',
-    tags: ['Files'],
-  })
+  .meta(
+    openapi({
+      method: 'GET',
+      path: '/files/{id}',
+      summary: 'Get file metadata',
+      tags: ['Files'],
+    }),
+  )
   .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
   .handler(async ({ input }) => {
     const [chosenFile] = await db

@@ -8,12 +8,6 @@ import type { router } from '@/server/orpc/router'
 
 const getClient = createIsomorphicFn()
   .server((): RouterClient<typeof router> => getServerOrpcClient())
-  .client(() =>
-    createORPCClient<RouterClient<typeof router>>(
-      new RPCLink({
-        url: () => new URL('/api/rpc', window.location.origin),
-      }),
-    ),
-  )
+  .client(() => createORPCClient<RouterClient<typeof router>>(new RPCLink({ url: '/api/rpc' })))
 
 export const orpc = createTanstackQueryUtils(getClient())

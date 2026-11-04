@@ -1,3 +1,4 @@
+import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { desc, eq } from 'drizzle-orm'
 import { env } from '@/lib/env/server'
@@ -6,12 +7,14 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
 export const listOwnedFiles = os
-  .route({
-    method: 'GET',
-    path: '/files',
-    summary: 'List files owned by the current user',
-    tags: ['Files'],
-  })
+  .meta(
+    openapi({
+      method: 'GET',
+      path: '/files',
+      summary: 'List files owned by the current user',
+      tags: ['Files'],
+    }),
+  )
   .handler(async () => {
     const session = await getSession()
     if (!session?.user) {

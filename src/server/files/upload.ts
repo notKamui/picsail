@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { and, eq } from 'drizzle-orm'
 import * as z from 'zod'
@@ -16,29 +17,31 @@ import {
 } from './image-processing'
 
 export const uploadImageForUser = os
-  .route({
-    method: 'POST',
-    path: '/files/upload',
-    summary: 'Upload an image',
-    tags: ['Files'],
-    spec: (operation) => ({
-      ...operation,
-      requestBody: {
-        required: true,
-        content: {
-          'multipart/form-data': {
-            schema: {
-              type: 'object',
-              properties: {
-                file: { type: 'string', format: 'binary' },
+  .meta(
+    openapi({
+      method: 'POST',
+      path: '/files/upload',
+      summary: 'Upload an image',
+      tags: ['Files'],
+      spec: (operation) => ({
+        ...operation,
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  file: { type: 'string', format: 'binary' },
+                },
+                required: ['file'],
               },
-              required: ['file'],
             },
           },
         },
-      },
+      }),
     }),
-  })
+  )
   .input(z.object({ file: z.file() }))
   .handler(async ({ input }) => {
     const uploadedFile = input.file

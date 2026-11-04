@@ -1,3 +1,4 @@
+import { openapi } from '@orpc/openapi'
 import { ORPCError, os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
 import * as z from 'zod'
@@ -6,28 +7,30 @@ import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
 export const getFileContent = os
-  .route({
-    method: 'GET',
-    path: '/files/{id}/content/{extension}',
-    summary: 'Get a public file',
-    tags: ['Files'],
-    outputStructure: 'detailed',
-    spec: (operation) => ({
-      ...operation,
-      responses: {
-        ...operation.responses,
-        200: {
-          description: 'File content',
-          content: {
-            'image/jpeg': { schema: { type: 'string', format: 'binary' } },
-            'image/png': { schema: { type: 'string', format: 'binary' } },
-            'image/gif': { schema: { type: 'string', format: 'binary' } },
-            'image/webp': { schema: { type: 'string', format: 'binary' } },
+  .meta(
+    openapi({
+      method: 'GET',
+      path: '/files/{id}/content/{extension}',
+      summary: 'Get a public file',
+      tags: ['Files'],
+      outputStructure: 'detailed',
+      spec: (operation) => ({
+        ...operation,
+        responses: {
+          ...operation.responses,
+          200: {
+            description: 'File content',
+            content: {
+              'image/jpeg': { schema: { type: 'string', format: 'binary' } },
+              'image/png': { schema: { type: 'string', format: 'binary' } },
+              'image/gif': { schema: { type: 'string', format: 'binary' } },
+              'image/webp': { schema: { type: 'string', format: 'binary' } },
+            },
           },
         },
-      },
+      }),
     }),
-  })
+  )
   .input(
     z.object({
       id: z.string().regex(/^[a-f0-9]{12}$/i),

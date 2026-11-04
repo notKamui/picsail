@@ -1,23 +1,30 @@
+import { OpenAPIGenerator } from '@orpc/openapi'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
-import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins'
+import { OpenAPIReferenceHandlerPlugin } from '@orpc/openapi/plugins'
 import { onError } from '@orpc/server'
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
+import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { createFileRoute } from '@tanstack/react-router'
-import { normalizeFetchRequest, uploadBodyLimitPlugin } from '@/server/orpc/body-limit'
+import { createTmpFileUploadPlugin, normalizeFetchRequest } from '@/server/orpc/request'
 import { router } from '@/server/orpc/router'
+
+const generator = new OpenAPIGenerator({
+  converters: [new ZodToJsonSchemaConverter()],
+})
 
 const handler = new OpenAPIHandler(router, {
   plugins: [
-    uploadBodyLimitPlugin,
-    new OpenAPIReferencePlugin({
-      schemaConverters: [new ZodToJsonSchemaConverter()],
-      specGenerateOptions: {
-        info: {
-          title: 'Picsail API',
-          version: '1.0.0',
-        },
-        servers: [{ url: '/api' }],
-      },
+    createTmpFileUploadPlugin(),
+    new OpenAPIReferenceHandlerPlugin({
+      spec: () =>
+        generator.generate(router, {
+          base: {
+            info: {
+              title: 'Picsail API',
+              version: '1.0.0',
+            },
+            servers: [{ url: '/api' }],
+          },
+        }),
       docsPath: '/docs',
       specPath: '/openapi.json',
       docsTitle: 'Picsail API',
