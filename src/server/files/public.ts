@@ -5,17 +5,6 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-export type GetPublicFileInput = {
-  id: string
-  extension: string
-}
-
-export type PublicFile = {
-  body: ReadableStream<Uint8Array>
-  mime: string
-  size: number
-}
-
 export const getFileContent = os
   .route({
     method: 'GET',
@@ -53,46 +42,32 @@ export const getFileContent = os
     }),
   )
   .handler(async ({ input }) => {
-    const file = await getPublicFile(input)
-    if (!file) {
+    const [row] = await db
+      .select({
+        extension: file.extension,
+        sha256: blob.sha256,
+        mime: blob.mime,
+        byteSize: blob.byteSize,
+      })
+      .from(file)
+      .innerJoin(blob, eq(blob.sha256, file.blobSha256))
+      .where(eq(file.id, input.id))
+      .limit(1)
+
+    if (!row || row.extension !== input.extension) {
       throw new ORPCError('NOT_FOUND')
     }
+
+    const object = await storage.open(`blobs/${row.sha256}`)
+    if (!object) throw new ORPCError('NOT_FOUND')
 
     return {
       status: 200 as const,
       headers: {
-        'content-type': file.mime,
-        'content-length': String(file.size),
+        'content-type': row.mime,
+        'content-length': String(row.byteSize),
         'x-content-type-options': 'nosniff',
       },
-      body: file.body,
+      body: object.body,
     }
   })
-
-export async function getPublicFile({
-  id,
-  extension,
-}: GetPublicFileInput): Promise<PublicFile | null> {
-  const [row] = await db
-    .select({
-      extension: file.extension,
-      sha256: blob.sha256,
-      mime: blob.mime,
-      byteSize: blob.byteSize,
-    })
-    .from(file)
-    .innerJoin(blob, eq(blob.sha256, file.blobSha256))
-    .where(eq(file.id, id))
-    .limit(1)
-
-  if (!row || row.extension !== extension) return null
-
-  const object = await storage.open(`blobs/${row.sha256}`)
-  if (!object) return null
-
-  return {
-    body: object.body,
-    mime: row.mime,
-    size: Number(row.byteSize),
-  }
-}
