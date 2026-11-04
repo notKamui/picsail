@@ -3,10 +3,12 @@ import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins'
 import { onError } from '@orpc/server'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { createFileRoute } from '@tanstack/react-router'
+import { normalizeFetchRequest, uploadBodyLimitPlugin } from '@/server/orpc/body-limit'
 import { router } from '@/server/orpc/router'
 
 const handler = new OpenAPIHandler(router, {
   plugins: [
+    uploadBodyLimitPlugin,
     new OpenAPIReferencePlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],
       specGenerateOptions: {
@@ -32,7 +34,7 @@ export const Route = createFileRoute('/api/$')({
   server: {
     handlers: {
       ANY: async ({ request }) => {
-        const { response } = await handler.handle(request, {
+        const { response } = await handler.handle(normalizeFetchRequest(request), {
           prefix: '/api',
         })
 
