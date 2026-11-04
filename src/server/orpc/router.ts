@@ -1,13 +1,15 @@
 import { deleteFileByCode } from '@/server/files/delete'
-import { getTestFile } from '@/server/files/info'
+import { getFileMetadata } from '@/server/files/info'
 import { listOwnedFiles } from '@/server/files/list'
+import { getFileContent } from '@/server/files/public'
 import { uploadImageForUser } from '@/server/files/upload'
 
 export const router = {
   files: {
-    listOwned: listOwnedFiles,
-    getTest: getTestFile,
-    deleteByCode: deleteFileByCode,
-    uploadImage: uploadImageForUser,
+    list: listOwnedFiles,
+    getMetadata: getFileMetadata,
+    delete: deleteFileByCode,
+    upload: uploadImageForUser,
+    getContent: getFileContent,
   },
 }

@@ -7,12 +7,12 @@ import { orpc } from '@/lib/orpc'
 
 export const Route = createFileRoute('/test/files/')({
   head: () => ({ meta: [{ title: 'File list test · Picsail' }] }),
-  loader: ({ context }) => context.queryClient.query(orpc.files.listOwned.queryOptions()),
+  loader: ({ context }) => context.queryClient.query(orpc.files.list.queryOptions()),
   component: FileListTestPage,
 })
 
 function FileListTestPage() {
-  const { data: result } = useSuspenseQuery(orpc.files.listOwned.queryOptions())
+  const { data: result } = useSuspenseQuery(orpc.files.list.queryOptions())
 
   return (
     <main className="mx-auto flex min-h-svh max-w-4xl flex-col gap-8 px-6 py-12">

@@ -25,7 +25,7 @@ function UploadTestPage() {
   const [upload, setUpload] = useState<UploadResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
-  const uploadMutation = useMutation(orpc.files.uploadImage.mutationOptions())
+  const uploadMutation = useMutation(orpc.files.upload.mutationOptions())
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -58,7 +58,7 @@ function UploadTestPage() {
       return
     }
     setUpload(result.upload)
-    await queryClient.invalidateQueries({ queryKey: orpc.files.listOwned.key() })
+    await queryClient.invalidateQueries({ queryKey: orpc.files.list.key() })
   }
 
   return (
