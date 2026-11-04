@@ -15,6 +15,7 @@ import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
 import { Route as ApiAuthSplatRouteRouteImport } from './routes/api/auth/$/route'
+import { Route as ApiOpenapiSplatRouteImport } from './routes/api/openapi.$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 import { Route as TestFilesIndexRouteImport } from './routes/test/files/index'
 import { Route as TestUploadIndexRouteImport } from './routes/test/upload/index'
@@ -50,6 +51,11 @@ const ApiAuthSplatRouteRoute = ApiAuthSplatRouteRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOpenapiSplatRoute = ApiOpenapiSplatRouteImport.update({
+  id: '/api/openapi/$',
+  path: '/api/openapi/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
   id: '/api/rpc/$',
   path: '/api/rpc/$',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/api/openapi/$': typeof ApiOpenapiSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/api/openapi/$': typeof ApiOpenapiSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files': typeof TestFilesIndexRoute
   '/test/upload': typeof TestUploadIndexRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRouteRoute
+  '/api/openapi/$': typeof ApiOpenapiSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/test/files/': typeof TestFilesIndexRoute
   '/test/upload/': typeof TestUploadIndexRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
+    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files/'
     | '/test/upload/'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/auth/$'
+    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files'
     | '/test/upload'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/auth/$'
+    | '/api/openapi/$'
     | '/api/rpc/$'
     | '/test/files/'
     | '/test/upload/'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
   ApiAuthSplatRouteRoute: typeof ApiAuthSplatRouteRoute
+  ApiOpenapiSplatRoute: typeof ApiOpenapiSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
   TestFilesIndexRoute: typeof TestFilesIndexRoute
   TestUploadIndexRoute: typeof TestUploadIndexRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/openapi/$': {
+      id: '/api/openapi/$'
+      path: '/api/openapi/$'
+      fullPath: '/api/openapi/$'
+      preLoaderRoute: typeof ApiOpenapiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/rpc/$': {
       id: '/api/rpc/$'
       path: '/api/rpc/$'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
   ApiAuthSplatRouteRoute: ApiAuthSplatRouteRoute,
+  ApiOpenapiSplatRoute: ApiOpenapiSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
   TestFilesIndexRoute: TestFilesIndexRoute,
   TestUploadIndexRoute: TestUploadIndexRoute,

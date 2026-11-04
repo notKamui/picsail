@@ -14,6 +14,12 @@ export type DeleteFileInput = {
 export class FileNotFoundOrDeleteCodeMismatchError extends Error {}
 
 export const deleteFileByCode = os
+  .route({
+    method: 'DELETE',
+    path: '/files/{id}',
+    summary: 'Delete a file using its delete code',
+    tags: ['Files'],
+  })
   .input(
     z.object({
       id: z
