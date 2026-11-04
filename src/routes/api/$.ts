@@ -14,10 +14,10 @@ const handler = new OpenAPIHandler(router, {
           title: 'Picsail API',
           version: '1.0.0',
         },
-        servers: [{ url: '/api/openapi' }],
+        servers: [{ url: '/api' }],
       },
       docsPath: '/docs',
-      specPath: '/spec.json',
+      specPath: '/openapi.json',
       docsTitle: 'Picsail API',
     }),
   ],
@@ -28,12 +28,12 @@ const handler = new OpenAPIHandler(router, {
   ],
 })
 
-export const Route = createFileRoute('/api/openapi/$')({
+export const Route = createFileRoute('/api/$')({
   server: {
     handlers: {
       ANY: async ({ request }) => {
         const { response } = await handler.handle(request, {
-          prefix: '/api/openapi',
+          prefix: '/api',
         })
 
         return response ?? new Response('Not found', { status: 404 })
