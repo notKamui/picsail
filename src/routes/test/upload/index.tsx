@@ -68,7 +68,9 @@ function UploadTestPage() {
           <h1 className={title({ h: 1 })}>Upload a file</h1>
         </div>
         <Button variant="outline" asChild>
-          <Link to="/test/files">My files</Link>
+          <Link to="/test/files" search={{ page: 1, pageSize: 20 }}>
+            My files
+          </Link>
         </Button>
       </header>
 
