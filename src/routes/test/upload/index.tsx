@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
-import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
+import { uploadImageForUser } from '@/functions/files'
 import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/test/upload/')({
@@ -20,21 +21,11 @@ type UploadResult = {
   size: number
 }
 
-const uploadResultSchema = z.object({
-  id: z.string(),
-  url: z.string(),
-  deleteCode: z.string(),
-  size: z.number(),
-})
-
-const uploadErrorSchema = z.object({
-  error: z.string(),
-})
-
 function UploadTestPage() {
   const [upload, setUpload] = useState<UploadResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const uploadImage = useServerFn(uploadImageForUser)
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -42,40 +33,27 @@ function UploadTestPage() {
     setUpload(null)
 
     const formData = new FormData(event.currentTarget)
-    const selectedFile = formData.get('file')
-    if (!(selectedFile instanceof File) || selectedFile.size === 0) {
+    setIsUploading(true)
+    const [requestError, result] = await tryAsync(uploadImage({ data: formData }))
+    setIsUploading(false)
+    if (requestError) {
+      setError(requestError.message || 'Could not complete the upload.')
+      return
+    }
+
+    if (result.status === 'invalid-file') {
       setError('Choose a file to upload.')
       return
     }
-
-    setIsUploading(true)
-    const [requestError, response] = await tryAsync(
-      fetch('/api/upload', { method: 'POST', body: formData }),
-    )
-    setIsUploading(false)
-    if (requestError) {
-      setError('Could not reach the upload endpoint.')
+    if (result.status === 'unauthorized') {
+      setError('Sign in before uploading a file.')
       return
     }
-
-    const [bodyError, body] = await tryAsync(response.json())
-    if (bodyError) {
-      setError('The upload endpoint returned an invalid response.')
+    if (result.status === 'error') {
+      setError(result.message)
       return
     }
-
-    if (!response.ok) {
-      const parsedError = uploadErrorSchema.safeParse(body)
-      setError(parsedError.success ? parsedError.data.error : 'Upload failed.')
-      return
-    }
-
-    const parsedUpload = uploadResultSchema.safeParse(body)
-    if (!parsedUpload.success) {
-      setError('The upload endpoint returned an invalid response.')
-      return
-    }
-    setUpload(parsedUpload.data)
+    setUpload(result.upload)
   }
 
   return (

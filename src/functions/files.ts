@@ -68,3 +68,32 @@ export const deleteFileByCode = createServerFn({ method: 'POST' })
     if (error) return { deleted: false as const }
     return { deleted: true as const }
   })
+
+export const uploadImageForUser = createServerFn({ method: 'POST' })
+  .validator(
+    z.custom<FormData>((value) => value instanceof FormData, 'Expected multipart form data'),
+  )
+  .handler(async ({ data }) => {
+    const uploadedFile = data.get('file')
+    if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
+      return { status: 'invalid-file' as const }
+    }
+
+    const { getSession } = await import('@/server/auth/session')
+    const session = await getSession()
+    if (!session?.user) {
+      return { status: 'unauthorized' as const }
+    }
+
+    const { uploadImage, UnsupportedUploadTypeError, UploadTooLargeError } =
+      await import('@/server/files/upload')
+    const [error, upload] = await tryAsync(
+      uploadImage({ userId: session.user.id, file: uploadedFile }),
+      [UnsupportedUploadTypeError, UploadTooLargeError],
+    )
+    if (error) {
+      return { status: 'error' as const, message: error.message }
+    }
+
+    return { status: 'success' as const, upload }
+  })
