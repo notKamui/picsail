@@ -4,10 +4,12 @@ import { os } from '@orpc/server'
 import { and, eq } from 'drizzle-orm'
 import * as z from 'zod'
 import { env } from '@/lib/env/server'
+import { publicFileUrl } from '@/lib/public-file-url'
 import { getSession } from '@/server/auth/session'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
+import { lockBlob } from './blob-lock'
 import {
   calculateBlurhash,
   imageExtension,
@@ -73,17 +75,21 @@ export default os
     const storedBytes = await prepareStoredImageBytes(sourceBytes, mimeType)
     const sha256 = createHash('sha256').update(storedBytes).digest('hex')
 
+    const blurhash = await calculateBlurhash(storedBytes)
+
     const result = await db.transaction(async (tx) => {
+      await lockBlob(tx, sha256)
+      await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
+
       const existing = await tx
-        .select()
+        .select({ id: file.id, extension: file.extension })
         .from(file)
         .where(and(eq(file.ownerId, session.user.id), eq(file.blobSha256, sha256)))
         .limit(1)
-
       if (existing[0]) {
         return {
           id: existing[0].id,
-          url: new URL(`/f/${existing[0].id}.${existing[0].extension}`, env.BASE_URL).toString(),
+          url: publicFileUrl(existing[0].id, existing[0].extension, env.BASE_URL),
           sha256,
           size: storedBytes.byteLength,
         }
@@ -97,7 +103,6 @@ export default os
       }
 
       const extension = imageExtension(mimeType)
-      const blurhash = await calculateBlurhash(storedBytes)
 
       await tx
         .insert(blob)
@@ -123,13 +128,11 @@ export default os
 
       return {
         id: created.id,
-        url: new URL(`/f/${created.id}.${created.extension}`, env.BASE_URL).toString(),
+        url: publicFileUrl(created.id, created.extension, env.BASE_URL),
         sha256,
         size: storedBytes.byteLength,
       }
     })
-
-    await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
 
     return {
       status: 'success' as const,

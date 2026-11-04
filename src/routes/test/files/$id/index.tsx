@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldError } from '@/components/ui/field'
 import { eyebrow, title } from '@/components/ui/typography'
 import { orpc } from '@/lib/orpc'
+import { publicFilePath } from '@/lib/public-file-url'
 import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/test/files/$id/')({
@@ -62,7 +63,7 @@ function FileDetailTestPage() {
     )
   }
 
-  const publicUrl = `/f/${file.hash}.${file.extension}`
+  const publicUrl = publicFilePath(file.hash, file.extension)
 
   return (
     <main className="mx-auto flex min-h-svh max-w-4xl flex-col gap-8 px-6 py-12">
