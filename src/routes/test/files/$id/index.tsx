@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
+import { deleteFileByCode, getTestFile } from '@/functions/files'
 import { tryAsync } from '@/lib/try'
-import { deleteFileByCode, getTestFile } from '@/server-functions/files'
 
 export const Route = createFileRoute('/test/files/$id/')({
   head: () => ({ meta: [{ title: 'File detail · Picsail' }] }),

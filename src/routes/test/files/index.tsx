@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { eyebrow, title } from '@/components/ui/typography'
-import { listOwnedFiles } from '@/server-functions/files'
+import { listOwnedFiles } from '@/functions/files'
 
 export const Route = createFileRoute('/test/files/')({
   head: () => ({ meta: [{ title: 'File list test · Picsail' }] }),
