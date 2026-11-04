@@ -107,6 +107,7 @@ async function removeUnreferencedBlob(sha256: string) {
 
     if (!recreatedBlob) {
       await storage.remove(`blobs/${sha256}`)
+      await storage.removePrefix(`cache/${sha256}/`)
     }
   })
 }
