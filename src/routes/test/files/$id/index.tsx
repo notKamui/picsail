@@ -13,7 +13,7 @@ import { tryAsync } from '@/lib/try'
 export const Route = createFileRoute('/test/files/$id/')({
   head: () => ({ meta: [{ title: 'File detail · Picsail' }] }),
   loader: ({ context, params }) =>
-    context.queryClient.query(orpc.files.getTest.queryOptions({ input: { id: params.id } })),
+    context.queryClient.query(orpc.files.getMetadata.queryOptions({ input: { id: params.id } })),
   component: FileDetailTestPage,
 })
 
@@ -21,12 +21,12 @@ function FileDetailTestPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { data: file } = useSuspenseQuery(orpc.files.getTest.queryOptions({ input: { id } }))
+  const { data: file } = useSuspenseQuery(orpc.files.getMetadata.queryOptions({ input: { id } }))
   const deleteMutation = useMutation(
-    orpc.files.deleteByCode.mutationOptions({
+    orpc.files.delete.mutationOptions({
       onSuccess: async (result) => {
         if (result.deleted) {
-          await queryClient.invalidateQueries({ queryKey: orpc.files.listOwned.key() })
+          await queryClient.invalidateQueries({ queryKey: orpc.files.list.key() })
         }
       },
     }),

@@ -22,7 +22,7 @@ export type FileInfoResult = {
 
 export class FileNotFoundError extends Error {}
 
-export const getTestFile = os
+export const getFileMetadata = os
   .route({
     method: 'GET',
     path: '/files/{id}',
