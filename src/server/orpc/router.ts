@@ -1,15 +1,16 @@
-import { createServerFn } from '@tanstack/react-start'
+import { os } from '@orpc/server'
+import { desc, eq } from 'drizzle-orm'
 import * as z from 'zod'
+import { env } from '@/lib/env/server'
 import { tryAsync } from '@/lib/try'
+import { getSession } from '@/server/auth/session'
+import { db } from '@/server/db'
+import { blob, file } from '@/server/db/schema/file'
+import { deleteFile, FileNotFoundOrDeleteCodeMismatchError } from '@/server/files/delete'
+import { FileNotFoundError, getFileInfo } from '@/server/files/info'
+import { uploadImage, UnsupportedUploadTypeError, UploadTooLargeError } from '@/server/files/upload'
 
-export const listOwnedFiles = createServerFn({ method: 'GET' }).handler(async () => {
-  const [{ desc, eq }, { env }, { getSession }, { db }, { blob, file }] = await Promise.all([
-    import('drizzle-orm'),
-    import('@/lib/env/server'),
-    import('@/server/auth/session'),
-    import('@/server/db'),
-    import('@/server/db/schema/file'),
-  ])
+const listOwnedFiles = os.handler(async () => {
   const session = await getSession()
   if (!session?.user) {
     return { authenticated: false as const, files: [] }
@@ -40,16 +41,15 @@ export const listOwnedFiles = createServerFn({ method: 'GET' }).handler(async ()
   }
 })
 
-export const getTestFile = createServerFn({ method: 'GET' })
-  .validator(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
-  .handler(async ({ data }) => {
-    const { FileNotFoundError, getFileInfo } = await import('@/server/files/info')
-    const [error, info] = await tryAsync(getFileInfo({ hash: data.id }), [FileNotFoundError])
+const getTestFile = os
+  .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
+  .handler(async ({ input }) => {
+    const [error, info] = await tryAsync(getFileInfo({ hash: input.id }), [FileNotFoundError])
     return error ? null : info
   })
 
-export const deleteFileByCode = createServerFn({ method: 'POST' })
-  .validator(
+const deleteFileByCode = os
+  .input(
     z.object({
       id: z
         .string()
@@ -61,32 +61,25 @@ export const deleteFileByCode = createServerFn({ method: 'POST' })
         .regex(/^[a-f0-9]{24}$/),
     }),
   )
-  .handler(async ({ data }) => {
-    const { deleteFile, FileNotFoundOrDeleteCodeMismatchError } =
-      await import('@/server/files/delete')
-    const [error] = await tryAsync(deleteFile(data), [FileNotFoundOrDeleteCodeMismatchError])
+  .handler(async ({ input }) => {
+    const [error] = await tryAsync(deleteFile(input), [FileNotFoundOrDeleteCodeMismatchError])
     if (error) return { deleted: false as const }
     return { deleted: true as const }
   })
 
-export const uploadImageForUser = createServerFn({ method: 'POST' })
-  .validator(
-    z.custom<FormData>((value) => value instanceof FormData, 'Expected multipart form data'),
-  )
-  .handler(async ({ data }) => {
-    const uploadedFile = data.get('file')
-    if (!(uploadedFile instanceof File) || uploadedFile.size === 0) {
+const uploadImageForUser = os
+  .input(z.object({ file: z.custom<File>((value) => value instanceof File) }))
+  .handler(async ({ input }) => {
+    const uploadedFile = input.file
+    if (uploadedFile.size === 0) {
       return { status: 'invalid-file' as const }
     }
 
-    const { getSession } = await import('@/server/auth/session')
     const session = await getSession()
     if (!session?.user) {
       return { status: 'unauthorized' as const }
     }
 
-    const { uploadImage, UnsupportedUploadTypeError, UploadTooLargeError } =
-      await import('@/server/files/upload')
     const [error, upload] = await tryAsync(
       uploadImage({ userId: session.user.id, file: uploadedFile }),
       [UnsupportedUploadTypeError, UploadTooLargeError],
@@ -97,3 +90,12 @@ export const uploadImageForUser = createServerFn({ method: 'POST' })
 
     return { status: 'success' as const, upload }
   })
+
+export const router = {
+  files: {
+    listOwned: listOwnedFiles,
+    getTest: getTestFile,
+    deleteByCode: deleteFileByCode,
+    uploadImage: uploadImageForUser,
+  },
+}

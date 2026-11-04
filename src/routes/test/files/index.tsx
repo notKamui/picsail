@@ -1,17 +1,18 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { eyebrow, title } from '@/components/ui/typography'
-import { listOwnedFiles } from '@/functions/files'
+import { orpc } from '@/lib/orpc'
 
 export const Route = createFileRoute('/test/files/')({
   head: () => ({ meta: [{ title: 'File list test · Picsail' }] }),
-  loader: () => listOwnedFiles(),
+  loader: ({ context }) => context.queryClient.query(orpc.files.listOwned.queryOptions()),
   component: FileListTestPage,
 })
 
 function FileListTestPage() {
-  const result = Route.useLoaderData()
+  const { data: result } = useSuspenseQuery(orpc.files.listOwned.queryOptions())
 
   return (
     <main className="mx-auto flex min-h-svh max-w-4xl flex-col gap-8 px-6 py-12">
