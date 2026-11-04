@@ -1,4 +1,7 @@
+import { os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
+import * as z from 'zod'
+import { tryAsync } from '@/lib/try'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
@@ -18,6 +21,13 @@ export type FileInfoResult = {
 }
 
 export class FileNotFoundError extends Error {}
+
+export const getTestFile = os
+  .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
+  .handler(async ({ input }) => {
+    const [error, info] = await tryAsync(getFileInfo({ hash: input.id }), [FileNotFoundError])
+    return error ? null : info
+  })
 
 export async function getFileInfo({ hash }: FileInfoInput): Promise<FileInfoResult> {
   const [chosenFile] = await db

@@ -1,6 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { os } from '@orpc/server'
 import { and, eq } from 'drizzle-orm'
+import * as z from 'zod'
 import { env } from '@/lib/env/server'
+import { tryAsync } from '@/lib/try'
+import { getSession } from '@/server/auth/session'
 import { db, type Transaction } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
@@ -28,6 +32,30 @@ export type UploadImageResult = {
 export class UnsupportedUploadTypeError extends Error {}
 
 export class UploadTooLargeError extends Error {}
+
+export const uploadImageForUser = os
+  .input(z.object({ file: z.custom<File>((value) => value instanceof File) }))
+  .handler(async ({ input }) => {
+    const uploadedFile = input.file
+    if (uploadedFile.size === 0) {
+      return { status: 'invalid-file' as const }
+    }
+
+    const session = await getSession()
+    if (!session?.user) {
+      return { status: 'unauthorized' as const }
+    }
+
+    const [error, upload] = await tryAsync(
+      uploadImage({ userId: session.user.id, file: uploadedFile }),
+      [UnsupportedUploadTypeError, UploadTooLargeError],
+    )
+    if (error) {
+      return { status: 'error' as const, message: error.message }
+    }
+
+    return { status: 'success' as const, upload }
+  })
 
 export async function uploadImage({
   userId,
