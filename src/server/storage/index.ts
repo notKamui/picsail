@@ -1,8 +1,10 @@
 import {
   CreateBucketCommand,
+  DeleteObjectsCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadBucketCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
@@ -77,10 +79,45 @@ async function remove(key: string) {
   await s3.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: key }))
 }
 
+async function removePrefix(prefix: string) {
+  await ensureBucket()
+  let continuationToken: string | undefined
+
+  do {
+    const result = await s3.send(
+      new ListObjectsV2Command({
+        Bucket: env.S3_BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    )
+    const objects = result.Contents?.flatMap((object) => (object.Key ? [{ Key: object.Key }] : []))
+
+    if (objects?.length) {
+      const deleted = await s3.send(
+        new DeleteObjectsCommand({
+          Bucket: env.S3_BUCKET,
+          Delete: { Objects: objects, Quiet: true },
+        }),
+      )
+      if (deleted.Errors?.length) {
+        throw new Error(`Failed to delete ${deleted.Errors.length} object(s) from ${prefix}`)
+      }
+    }
+
+    if (!result.IsTruncated) break
+    if (!result.NextContinuationToken) {
+      throw new Error(`S3 returned a truncated listing without a continuation token for ${prefix}`)
+    }
+    continuationToken = result.NextContinuationToken
+  } while (continuationToken)
+}
+
 export const storage = {
   put,
   open,
   remove,
+  removePrefix,
 }
 
 function isMissing(error: unknown) {
