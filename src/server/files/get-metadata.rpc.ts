@@ -5,7 +5,7 @@ import * as z from 'zod'
 import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
-const getFileMetadata = os
+export default os
   .meta(
     openapi({
       method: 'GET',
@@ -45,5 +45,3 @@ const getFileMetadata = os
       createdAt: chosenFile.createdAt,
     }
   })
-
-export default getFileMetadata

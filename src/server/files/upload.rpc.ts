@@ -16,7 +16,7 @@ import {
   prepareStoredImageBytes,
 } from './image-processing'
 
-const uploadImageForUser = os
+export default os
   .meta(
     openapi({
       method: 'POST',
@@ -138,5 +138,3 @@ const uploadImageForUser = os
       size: result.size,
     }
   })
-
-export default uploadImageForUser
