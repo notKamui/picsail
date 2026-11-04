@@ -50,14 +50,14 @@ function Home() {
           <p className={eyebrow()}>Picsail</p>
           <CardTitle className={title({ h: 1 })}>A quiet place for pictures</CardTitle>
           <CardDescription className={text({ variant: 'muted' })}>
-            Upload originals, share a hash URL, and keep a private delete code for each file.
+            Upload originals, share a hash URL, and manage the files you own.
           </CardDescription>
         </CardHeader>
         <CardContent className={`${article} space-y-4`}>
           <p>Signed-in users can create an upload, copy a public URL, and remove files they own.</p>
           <ul className="m-0 list-disc pl-5">
             <li>Fast hash-based sharing</li>
-            <li>Delete-by-code and owner cleanup</li>
+            <li>Owner and admin file deletion</li>
             <li>Private admin controls</li>
           </ul>
         </CardContent>

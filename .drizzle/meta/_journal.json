@@ -22,6 +22,13 @@
       "when": 1793708045442,
       "tag": "0002_funny_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793811289585,
+      "tag": "0003_special_angel",
+      "breakpoints": true
     }
   ]
 }

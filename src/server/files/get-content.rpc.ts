@@ -44,35 +44,37 @@ const getFileContent = os
       body: z.custom<ReadableStream<Uint8Array>>(),
     }),
   )
-  .handler(async ({ input }) => {
-    const [row] = await db
-      .select({
-        extension: file.extension,
-        sha256: blob.sha256,
-        mime: blob.mime,
-        byteSize: blob.byteSize,
-      })
-      .from(file)
-      .innerJoin(blob, eq(blob.sha256, file.blobSha256))
-      .where(eq(file.id, input.id))
-      .limit(1)
+  .handler(async ({ input }) => getFileContentResponse(input))
 
-    if (!row || row.extension !== input.extension) {
-      throw new ORPCError('NOT_FOUND')
-    }
+export async function getFileContentResponse(input: { id: string; extension: string }) {
+  const [row] = await db
+    .select({
+      extension: file.extension,
+      sha256: blob.sha256,
+      mime: blob.mime,
+      byteSize: blob.byteSize,
+    })
+    .from(file)
+    .innerJoin(blob, eq(blob.sha256, file.blobSha256))
+    .where(eq(file.id, input.id))
+    .limit(1)
 
-    const object = await storage.open(`blobs/${row.sha256}`)
-    if (!object) throw new ORPCError('NOT_FOUND')
+  if (!row || row.extension !== input.extension) {
+    throw new ORPCError('NOT_FOUND')
+  }
 
-    return {
-      status: 200 as const,
-      headers: {
-        'content-type': row.mime,
-        'content-length': String(row.byteSize),
-        'x-content-type-options': 'nosniff',
-      },
-      body: object.body,
-    }
-  })
+  const object = await storage.open(`blobs/${row.sha256}`)
+  if (!object) throw new ORPCError('NOT_FOUND')
+
+  return {
+    status: 200 as const,
+    headers: {
+      'content-type': row.mime,
+      'content-length': String(row.byteSize),
+      'x-content-type-options': 'nosniff',
+    },
+    body: object.body,
+  }
+}
 
 export default getFileContent

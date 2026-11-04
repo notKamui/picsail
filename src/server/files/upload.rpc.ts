@@ -83,8 +83,7 @@ const uploadImageForUser = os
       if (existing[0]) {
         return {
           id: existing[0].id,
-          url: new URL(`f/${existing[0].id}.${existing[0].extension}`, env.BASE_URL).toString(),
-          deleteCode: existing[0].deleteCode,
+          url: new URL(`/f/${existing[0].id}.${existing[0].extension}`, env.BASE_URL).toString(),
           sha256,
           size: storedBytes.byteLength,
         }
@@ -98,7 +97,6 @@ const uploadImageForUser = os
       }
 
       const extension = imageExtension(mimeType)
-      const deleteCode = randomBytes(12).toString('hex')
       const blurhash = await calculateBlurhash(storedBytes)
 
       await tx
@@ -119,15 +117,13 @@ const uploadImageForUser = os
           blobSha256: sha256,
           extension,
           kind: 'image',
-          deleteCode,
           originalName: uploadedFile.name || null,
         })
         .returning()
 
       return {
         id: created.id,
-        url: new URL(`f/${created.id}.${created.extension}`, env.BASE_URL).toString(),
-        deleteCode: created.deleteCode,
+        url: new URL(`/f/${created.id}.${created.extension}`, env.BASE_URL).toString(),
         sha256,
         size: storedBytes.byteLength,
       }
@@ -135,7 +131,12 @@ const uploadImageForUser = os
 
     await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
 
-    return { status: 'success' as const, upload: result }
+    return {
+      status: 'success' as const,
+      hash: result.id,
+      url: result.url,
+      size: result.size,
+    }
   })
 
 export default uploadImageForUser

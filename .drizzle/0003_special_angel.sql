@@ -1,0 +1,1 @@
+ALTER TABLE "file" DROP COLUMN "delete_code";
