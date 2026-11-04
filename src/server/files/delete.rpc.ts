@@ -6,7 +6,7 @@ import { db } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
 
-export const deleteFileByCode = os
+const deleteFileByCode = os
   .meta(
     openapi({
       method: 'DELETE',
@@ -48,8 +48,10 @@ export const deleteFileByCode = os
     })
 
     if (result.blobSha256) {
-      await storage.delete(`blobs/${result.blobSha256}`)
+      await storage.remove(`blobs/${result.blobSha256}`)
     }
 
     return { deleted: result.deleted }
   })
+
+export default deleteFileByCode

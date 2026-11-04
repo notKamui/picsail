@@ -16,7 +16,7 @@ import {
   prepareStoredImageBytes,
 } from './image-processing'
 
-export const uploadImageForUser = os
+const uploadImageForUser = os
   .meta(
     openapi({
       method: 'POST',
@@ -137,3 +137,5 @@ export const uploadImageForUser = os
 
     return { status: 'success' as const, upload: result }
   })
+
+export default uploadImageForUser

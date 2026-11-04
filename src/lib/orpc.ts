@@ -4,7 +4,7 @@ import type { RouterClient } from '@orpc/server'
 import { createTanstackQueryUtils } from '@orpc/tanstack-query'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { getServerOrpcClient } from '@/lib/orpc.server'
-import type { router } from '@/server/orpc/router'
+import type { router } from '@/server/orpc/router.gen'
 
 const getClient = createIsomorphicFn()
   .server((): RouterClient<typeof router> => getServerOrpcClient())

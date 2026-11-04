@@ -5,7 +5,7 @@ import { onError } from '@orpc/server'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { createFileRoute } from '@tanstack/react-router'
 import { createTmpFileUploadPlugin, normalizeFetchRequest } from '@/server/orpc/request'
-import { router } from '@/server/orpc/router'
+import { router } from '@/server/orpc/router.gen'
 
 const generator = new OpenAPIGenerator({
   converters: [new ZodToJsonSchemaConverter()],

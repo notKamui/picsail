@@ -6,6 +6,7 @@ import { defineConfig, lazyPlugins } from 'vite-plus'
 import fmt from './oxfmt.config.ts'
 import lint from './oxlint.config.ts'
 import { ensureBucketPlugin } from './plugins/ensure-bucket.ts'
+import { orpcRouterPlugin } from './plugins/orpc-router.ts'
 
 const config = defineConfig({
   server: {
@@ -20,6 +21,10 @@ const config = defineConfig({
   plugins: lazyPlugins(() => [
     devtools(),
     tailwindcss(),
+    orpcRouterPlugin({
+      proceduresDir: 'src/server',
+      outputFile: 'src/server/orpc/router.gen.ts',
+    }),
     tanstackStart(),
     react(),
     ensureBucketPlugin(),

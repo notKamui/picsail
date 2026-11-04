@@ -80,7 +80,7 @@ async function remove(key: string) {
 export const storage = {
   put,
   open,
-  delete: remove,
+  remove,
 }
 
 function isMissing(error: unknown) {
