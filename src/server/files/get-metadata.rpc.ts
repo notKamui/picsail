@@ -2,7 +2,7 @@ import { openapi } from '@orpc/openapi'
 import { os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
 import * as z from 'zod'
-import { db } from '@/server/db'
+import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 
 export default os
@@ -15,33 +15,35 @@ export default os
     }),
   )
   .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
-  .handler(async ({ input }) => {
-    const [chosenFile] = await db
-      .select({
-        id: file.id,
-        kind: file.kind,
-        extension: file.extension,
-        originalName: file.originalName,
-        createdAt: file.createdAt,
-        byteSize: blob.byteSize,
-        mime: blob.mime,
-        blurhash: blob.blurhash,
-      })
-      .from(file)
-      .innerJoin(blob, eq(blob.sha256, file.blobSha256))
-      .where(eq(file.id, input.id))
-      .limit(1)
+  .handler(({ input }) => getFileMetadata(input.id))
 
-    if (!chosenFile) return null
+async function getFileMetadata(id: string) {
+  const row = await db
+    .select({
+      id: file.id,
+      kind: file.kind,
+      extension: file.extension,
+      originalName: file.originalName,
+      createdAt: file.createdAt,
+      byteSize: blob.byteSize,
+      mime: blob.mime,
+      blurhash: blob.blurhash,
+    })
+    .from(file)
+    .innerJoin(blob, eq(blob.sha256, file.blobSha256))
+    .where(eq(file.id, id))
+    .then(takeUniqueOrNull)
 
-    return {
-      hash: chosenFile.id,
-      type: chosenFile.kind,
-      mime: chosenFile.mime,
-      size: Number(chosenFile.byteSize),
-      blurhash: chosenFile.blurhash,
-      extension: chosenFile.extension,
-      originalName: chosenFile.originalName,
-      createdAt: chosenFile.createdAt,
-    }
-  })
+  if (!row) return null
+
+  return {
+    hash: row.id,
+    type: row.kind,
+    mime: row.mime,
+    size: Number(row.byteSize),
+    blurhash: row.blurhash,
+    extension: row.extension,
+    originalName: row.originalName,
+    createdAt: row.createdAt,
+  }
+}

@@ -6,8 +6,9 @@ import * as z from 'zod'
 import { env } from '@/lib/env/server'
 import { publicFileUrl } from '@/lib/public-file-url'
 import { getSession } from '@/server/auth/session'
-import { db } from '@/server/db'
+import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
+import type { Transaction } from '@/server/db/utils'
 import { storage } from '@/server/storage'
 import { lockBlob } from './blob-lock'
 import {
@@ -16,7 +17,14 @@ import {
   isSupportedImageMime,
   normalizeMime,
   prepareStoredImageBytes,
+  type SupportedImageMime,
 } from './image-processing'
+
+type UploadValidation =
+  | { status: 'invalid-file' }
+  | { status: 'unauthorized' }
+  | { status: 'error'; message: string }
+  | { status: 'ok'; ownerId: string; mimeType: SupportedImageMime }
 
 export default os
   .meta(
@@ -46,98 +54,141 @@ export default os
   )
   .input(z.object({ file: z.file() }))
   .handler(async ({ input }) => {
-    const uploadedFile = input.file
-    if (uploadedFile.size === 0) {
-      return { status: 'invalid-file' as const }
-    }
+    const validation = await validateUpload(input.file)
+    if (validation.status !== 'ok') return validation
 
-    const session = await getSession()
-    if (!session?.user) {
-      return { status: 'unauthorized' as const }
-    }
-
-    const mimeType = normalizeMime(uploadedFile.type)
-    if (!isSupportedImageMime(mimeType)) {
-      return {
-        status: 'error' as const,
-        message: 'Only JPEG, PNG, GIF, and WebP uploads are supported',
-      }
-    }
-
-    if (uploadedFile.size > env.MAX_UPLOAD_BYTES) {
-      return {
-        status: 'error' as const,
-        message: `Upload exceeds the ${Math.round(env.MAX_UPLOAD_BYTES / 1024 / 1024)} MB limit`,
-      }
-    }
-
-    const sourceBytes = new Uint8Array(await uploadedFile.arrayBuffer())
-    const storedBytes = await prepareStoredImageBytes(sourceBytes, mimeType)
-    const sha256 = createHash('sha256').update(storedBytes).digest('hex')
-
-    const blurhash = await calculateBlurhash(storedBytes)
-
-    const result = await db.transaction(async (tx) => {
-      await lockBlob(tx, sha256)
-      await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
-
-      const existing = await tx
-        .select({ id: file.id, extension: file.extension })
-        .from(file)
-        .where(and(eq(file.ownerId, session.user.id), eq(file.blobSha256, sha256)))
-        .limit(1)
-      if (existing[0]) {
-        return {
-          id: existing[0].id,
-          url: publicFileUrl(existing[0].id, existing[0].extension, env.BASE_URL),
-          sha256,
-          size: storedBytes.byteLength,
-        }
-      }
-
-      let id: string
-      while (true) {
-        id = randomBytes(6).toString('hex')
-        const current = await tx.select({ id: file.id }).from(file).where(eq(file.id, id)).limit(1)
-        if (current.length === 0) break
-      }
-
-      const extension = imageExtension(mimeType)
-
-      await tx
-        .insert(blob)
-        .values({
-          sha256,
-          byteSize: storedBytes.byteLength,
-          mime: mimeType,
-          blurhash,
-        })
-        .onConflictDoNothing()
-
-      const [created] = await tx
-        .insert(file)
-        .values({
-          id,
-          ownerId: session.user.id,
-          blobSha256: sha256,
-          extension,
-          kind: 'image',
-          originalName: uploadedFile.name || null,
-        })
-        .returning()
-
-      return {
-        id: created.id,
-        url: publicFileUrl(created.id, created.extension, env.BASE_URL),
-        sha256,
-        size: storedBytes.byteLength,
-      }
+    const prepared = await prepareImageUpload(input.file, validation.mimeType)
+    const storedFile = await persistUploadedFile({
+      ownerId: validation.ownerId,
+      originalName: input.file.name,
+      mimeType: validation.mimeType,
+      ...prepared,
     })
 
     return {
-      status: 'success' as const,
-      hash: result.id,
-      url: result.url,
-      size: result.size,
+      status: 'ok' as const,
+      hash: storedFile.id,
+      url: publicFileUrl(storedFile.id, storedFile.extension, env.BASE_URL),
+      size: prepared.storedBytes.byteLength,
     }
   })
+
+/** Validate before reading or decoding the uploaded bytes. */
+async function validateUpload(uploadedFile: File): Promise<UploadValidation> {
+  if (uploadedFile.size === 0) {
+    return { status: 'invalid-file' as const }
+  }
+
+  const session = await getSession()
+  if (!session?.user) {
+    return { status: 'unauthorized' as const }
+  }
+
+  const mimeType = normalizeMime(uploadedFile.type)
+  if (!isSupportedImageMime(mimeType)) {
+    return {
+      status: 'error' as const,
+      message: 'Only JPEG, PNG, GIF, and WebP uploads are supported',
+    }
+  }
+
+  if (uploadedFile.size > env.MAX_UPLOAD_BYTES) {
+    return {
+      status: 'error' as const,
+      message: `Upload exceeds the ${Math.round(env.MAX_UPLOAD_BYTES / 1024 / 1024)} MB limit`,
+    }
+  }
+
+  return {
+    status: 'ok' as const,
+    ownerId: session.user.id,
+    mimeType,
+  }
+}
+
+/** Normalize and fingerprint bytes before opening the database transaction. */
+async function prepareImageUpload(uploadedFile: File, mimeType: SupportedImageMime) {
+  const sourceBytes = new Uint8Array(await uploadedFile.arrayBuffer())
+  const storedBytes = await prepareStoredImageBytes(sourceBytes, mimeType)
+  const sha256 = createHash('sha256').update(storedBytes).digest('hex')
+  const blurhash = await calculateBlurhash(storedBytes)
+
+  return { storedBytes, sha256, blurhash }
+}
+
+/**
+ * Serialize operations for this content hash and store bytes before inserting
+ * references, so a failed storage write cannot leave a file row without data.
+ */
+async function persistUploadedFile({
+  ownerId,
+  originalName,
+  mimeType,
+  storedBytes,
+  sha256,
+  blurhash,
+}: {
+  ownerId: string
+  originalName: string
+  mimeType: SupportedImageMime
+  storedBytes: Uint8Array
+  sha256: string
+  blurhash: string
+}) {
+  return db.transaction(async (tx) => {
+    await lockBlob(tx, sha256)
+
+    const existingFile = await tx
+      .select({ id: file.id, extension: file.extension })
+      .from(file)
+      .where(and(eq(file.ownerId, ownerId), eq(file.blobSha256, sha256)))
+      .then(takeUniqueOrNull)
+
+    if (existingFile) {
+      await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
+      return existingFile
+    }
+
+    const id = await generateFileId(tx)
+    const extension = imageExtension(mimeType)
+
+    await storage.put(`blobs/${sha256}`, storedBytes, mimeType)
+    await tx
+      .insert(blob)
+      .values({
+        sha256,
+        byteSize: storedBytes.byteLength,
+        mime: mimeType,
+        blurhash,
+      })
+      .onConflictDoNothing()
+
+    const [createdFile] = await tx
+      .insert(file)
+      .values({
+        id,
+        ownerId,
+        blobSha256: sha256,
+        extension,
+        kind: 'image',
+        originalName: originalName || null,
+      })
+      .returning({ id: file.id, extension: file.extension })
+
+    return createdFile
+  })
+}
+
+/** Generate a short public id, retrying on the unlikely event of a collision. */
+async function generateFileId(tx: Transaction) {
+  while (true) {
+    const id = randomBytes(6).toString('hex')
+    const existingFile = await tx
+      .select({ id: file.id })
+      .from(file)
+      .where(eq(file.id, id))
+      .then(takeUniqueOrNull)
+
+    if (!existingFile) return id
+  }
+}
