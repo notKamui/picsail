@@ -38,6 +38,8 @@ function Home() {
     await queryClient.cancelQueries({ queryKey: orpc.files.list.key() })
     queryClient.removeQueries({ queryKey: orpc.files.list.key() })
     queryClient.removeQueries({ queryKey: orpc.files.getMetadata.key() })
+    await queryClient.cancelQueries({ queryKey: orpc.admin.listFiles.key() })
+    queryClient.removeQueries({ queryKey: orpc.admin.listFiles.key() })
     await router.invalidate()
   }
 
@@ -49,6 +51,11 @@ function Home() {
         </Link>
         {user ? (
           <div className="flex items-center gap-3">
+            {user.isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin">Admin</Link>
+              </Button>
+            )}
             <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:block">
               {user.name || user.email}
             </span>

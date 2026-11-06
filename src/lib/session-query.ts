@@ -1,18 +1,20 @@
 import { queryOptions } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import { setResponseHeader } from '@tanstack/react-start/server'
-import { getSession } from '@/server/auth/session'
+import { getSession, isAdmin } from '@/server/auth/session'
 
 /**
  * Resolves the current request's user on the server for the home route.
  * The session itself is not sent to the browser; the response is marked private.
- * @returns The user's ID, name and email, or null when the request has no session.
+ * @returns The user's ID, name, email and admin flag, or null without a session.
  */
 const getCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {
   setResponseHeader('Cache-Control', 'private, no-store')
   const session = await getSession()
   const user = session?.user
-  return user ? { id: user.id, name: user.name, email: user.email } : null
+  return user
+    ? { id: user.id, name: user.name, email: user.email, isAdmin: isAdmin(user.role) }
+    : null
 })
 
 /**
