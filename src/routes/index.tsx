@@ -1,91 +1,102 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { article, eyebrow, text, title } from '@/components/ui/typography'
+import { UploadWorkspace } from '@/components/upload-workspace'
 import { authClient } from '@/lib/auth-client'
+import { orpc } from '@/lib/orpc'
+import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
 
 export const Route = createFileRoute('/')({
-  head: () => ({
-    meta: [{ title: 'Picsail' }],
-  }),
+  head: () => ({ meta: [{ title: 'Picsail' }] }),
+  beforeLoad: async ({ context }) => {
+    await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
+  },
   component: Home,
 })
 
 function Home() {
-  const navigate = useNavigate()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { data: user, isPending, error } = useQuery(currentUserQueryOptions())
+  const queryClient = useQueryClient()
+  const router = useRouter()
   const [signOutError, setSignOutError] = useState<string | null>(null)
+  const [signingOut, setSigningOut] = useState(false)
 
-  async function handleSignOut() {
-    setIsSigningOut(true)
+  /** Ends the current browser session and removes cached file data on success. */
+  async function signOut() {
+    setSigningOut(true)
     setSignOutError(null)
     const [requestError, result] = await tryAsync(authClient.signOut())
-    if (requestError) {
+    setSigningOut(false)
+    if (requestError || result.error) {
       setSignOutError('Could not sign out. Please try again.')
-      setIsSigningOut(false)
       return
     }
-    if (result.error) {
-      setSignOutError(result.error.message ?? 'Could not sign out. Please try again.')
-      setIsSigningOut(false)
-      return
-    }
-    setIsSigningOut(false)
-    await navigate({ to: '/' })
+    queryClient.setQueryData(currentUserQueryOptions().queryKey, null)
+    await queryClient.cancelQueries({ queryKey: orpc.files.list.key() })
+    queryClient.removeQueries({ queryKey: orpc.files.list.key() })
+    queryClient.removeQueries({ queryKey: orpc.files.getMetadata.key() })
+    await router.invalidate()
   }
 
   return (
-    <main className="mx-auto flex min-h-svh max-w-4xl items-center justify-center px-6 py-16">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <p className={eyebrow()}>Picsail</p>
-          <CardTitle className={title({ h: 1 })}>A quiet place for pictures</CardTitle>
-          <CardDescription className={text({ variant: 'muted' })}>
-            Upload originals, share a hash URL, and manage the files you own.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className={`${article} space-y-4`}>
-          <p>Signed-in users can create an upload, copy a public URL, and remove files they own.</p>
-          <ul className="m-0 list-disc pl-5">
-            <li>Fast hash-based sharing</li>
-            <li>Owner and admin file deletion</li>
-            <li>Private admin controls</li>
-          </ul>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to="/test/upload">Test upload</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/test/files" search={{ page: 1, pageSize: 20 }}>
-              Test files
-            </Link>
-          </Button>
-          <Button asChild>
+    <main className="mx-auto min-h-svh max-w-6xl px-5 pb-20 sm:px-8">
+      <header className="flex items-center justify-between gap-4 border-b border-border py-6">
+        <Link to="/" className="font-serif text-2xl font-semibold tracking-tight">
+          Picsail<span className="text-muted-foreground">.</span>
+        </Link>
+        {user ? (
+          <div className="flex items-center gap-3">
+            <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:block">
+              {user.name || user.email}
+            </span>
+            <Button variant="ghost" size="sm" onClick={signOut} disabled={signingOut}>
+              <LogOut aria-hidden="true" /> {signingOut ? 'Signing out…' : 'Sign out'}
+            </Button>
+          </div>
+        ) : !isPending ? (
+          <Button variant="outline" size="sm" asChild>
             <Link to="/sign-in">Sign in</Link>
           </Button>
-          <Button variant="secondary" asChild>
-            <Link to="/sign-up">Create account</Link>
-          </Button>
-          <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
-            {isSigningOut ? 'Signing out…' : 'Sign out'}
-          </Button>
-        </CardFooter>
-        {signOutError ? (
-          <p role="alert" className="px-6 pb-6 text-sm text-destructive">
-            {signOutError}
-          </p>
         ) : null}
-      </Card>
+      </header>
+
+      {signOutError && (
+        <p role="alert" className="mt-4 text-sm text-destructive">
+          {signOutError}
+        </p>
+      )}
+      {isPending ? (
+        <output className="block py-16 text-sm text-muted-foreground">Loading your session…</output>
+      ) : error ? (
+        <p role="alert" className="py-16 text-sm text-destructive">
+          Could not load your session. Please refresh the page.
+        </p>
+      ) : user ? (
+        <UploadWorkspace key={user.id} userId={user.id} />
+      ) : (
+        <section className="mx-auto max-w-2xl py-20 sm:py-28">
+          <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+            Your images, your space
+          </p>
+          <h1 className="mt-5 max-w-xl font-serif text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
+            A quiet place for pictures.
+          </h1>
+          <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">
+            Upload an image, share its link, and keep your files close at hand.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/sign-in">Sign in to upload</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/sign-up">Create an account</Link>
+            </Button>
+          </div>
+        </section>
+      )}
     </main>
   )
 }
