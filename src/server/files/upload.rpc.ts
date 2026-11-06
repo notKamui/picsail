@@ -73,7 +73,12 @@ export default os
     }
   })
 
-/** Validate before reading or decoding the uploaded bytes. */
+/**
+ * Checks the upload before reading or decoding its bytes, including the current
+ * request's session, declared MIME type and configured size limit.
+ * @param uploadedFile - File received by the multipart upload procedure.
+ * @returns A failure status or the authenticated owner and supported MIME type.
+ */
 async function validateUpload(uploadedFile: File): Promise<UploadValidation> {
   if (uploadedFile.size === 0) {
     return { status: 'invalid-file' as const }
@@ -106,7 +111,13 @@ async function validateUpload(uploadedFile: File): Promise<UploadValidation> {
   }
 }
 
-/** Normalize and fingerprint bytes before opening the database transaction. */
+/**
+ * Reads, normalizes and fingerprints an upload before opening a database
+ * transaction; processing and decoding failures propagate.
+ * @param uploadedFile - Validated multipart file to read into memory.
+ * @param mimeType - Validated MIME type used for re-encoding.
+ * @returns Stored bytes, their SHA-256 hash and a BlurHash placeholder.
+ */
 async function prepareImageUpload(uploadedFile: File, mimeType: SupportedImageMime) {
   const sourceBytes = new Uint8Array(await uploadedFile.arrayBuffer())
   const storedBytes = await prepareStoredImageBytes(sourceBytes, mimeType)
@@ -117,8 +128,11 @@ async function prepareImageUpload(uploadedFile: File, mimeType: SupportedImageMi
 }
 
 /**
- * Serialize operations for this content hash and store bytes before inserting
- * references, so a failed storage write cannot leave a file row without data.
+ * Persists an upload under the blob lock, reusing an existing owner/file pair.
+ * S3 bytes are written before database references; a later SQL failure cannot
+ * roll back the S3 write and may leave an unreferenced object.
+ * @param options - Owner, original name, MIME type and prepared bytes/hash/BlurHash.
+ * @returns The existing or newly created file's public ID and extension.
  */
 async function persistUploadedFile({
   ownerId,
@@ -179,7 +193,12 @@ async function persistUploadedFile({
   })
 }
 
-/** Generate a short public id, retrying on the unlikely event of a collision. */
+/**
+ * Generates an upload's short random public ID, retrying IDs found in the database.
+ * The subsequent insert is responsible for enforcing uniqueness under concurrency.
+ * @param tx - Upload transaction used to check candidate IDs.
+ * @returns A currently unused 12-character hexadecimal ID.
+ */
 async function generateFileId(tx: Transaction) {
   while (true) {
     const id = randomBytes(6).toString('hex')

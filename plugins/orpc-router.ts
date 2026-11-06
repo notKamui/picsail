@@ -17,10 +17,20 @@ export interface ORPCRouterPluginOptions {
   outputFile: string
 }
 
+/**
+ * Creates an empty node while constructing the generated oRPC router tree.
+ * @returns A node with independent procedure and child maps.
+ */
 function createNode(): RouterNode {
   return { procedures: new Map(), children: new Map() }
 }
 
+/**
+ * Converts a procedure filename segment into a safe router property name.
+ * @param segment - File or directory segment, optionally using hyphens.
+ * @returns A camel-cased property name.
+ * @throws If the segment cannot be represented as a supported identifier.
+ */
 function toRouteSegment(segment: string): string {
   if (!/^[A-Za-z_$][\w$]*(?:-[A-Za-z0-9_$]+)*$/.test(segment)) {
     throw new Error(`Invalid oRPC route segment: ${segment}`)
@@ -29,6 +39,13 @@ function toRouteSegment(segment: string): string {
   return segment.replaceAll(/-([A-Za-z0-9_$])/g, (_, character: string) => character.toUpperCase())
 }
 
+/**
+ * Recursively discovers .rpc.ts files for the router generation plugin.
+ * @param directory - Directory currently being scanned.
+ * @param root - Procedure root used to derive route segments.
+ * @returns Absolute file paths and their validated router paths.
+ * @throws For filesystem errors or invalid/prohibited route segments.
+ */
 async function findProcedures(directory: string, root: string): Promise<ProcedureFile[]> {
   const entries = await readdir(directory, { withFileTypes: true })
   const files: ProcedureFile[] = []
@@ -56,6 +73,13 @@ async function findProcedures(directory: string, root: string): Promise<Procedur
   return files
 }
 
+/**
+ * Builds the generated router module text from discovered procedure files.
+ * @param files - Procedure files and route segments, in output order.
+ * @param outputPath - Generated module path used to calculate relative imports.
+ * @returns TypeScript source containing imports and the nested router object.
+ * @throws When a procedure route conflicts with another procedure or branch.
+ */
 function buildRouter(files: ProcedureFile[], outputPath: string): string {
   const root = createNode()
 
@@ -96,6 +120,12 @@ function buildRouter(files: ProcedureFile[], outputPath: string): string {
 
   const procedureNames = new Map(files.map((file, index) => [file.filePath, `procedure${index}`]))
 
+  /**
+   * Renders a subtree as an indented object literal in the generated module.
+   * @param node - Router tree node to serialize.
+   * @param indent - Current indentation width in spaces.
+   * @returns Source text for the node and its descendants.
+   */
   function serialize(node: RouterNode, indent = 0): string {
     const entries = [
       ...[...node.procedures].map(([key, filePath]) => `${key}: ${procedureNames.get(filePath)}`),
@@ -116,6 +146,13 @@ export const router = ${serialize(root)}
 `
 }
 
+/**
+ * Discovers procedures and writes the generated router only if its text changed.
+ * Creates the output directory as needed and propagates filesystem errors.
+ * @param proceduresDir - Root directory containing procedure modules.
+ * @param outputPath - Destination generated TypeScript file.
+ * @returns True if the file was written, false if it was already up to date.
+ */
 async function generate(proceduresDir: string, outputPath: string) {
   const foundFiles = await findProcedures(proceduresDir, proceduresDir)
   const files = foundFiles.reduce<ProcedureFile[]>((sorted, file) => {
@@ -138,12 +175,23 @@ async function generate(proceduresDir: string, outputPath: string) {
   return true
 }
 
+/**
+ * Creates the Vite plugin that generates the oRPC router at configuration time and
+ * watches for procedure additions/removals in development.
+ * @param options - Procedure directory and generated output path, relative to Vite root.
+ * @returns A plugin whose hooks write the router and register filesystem watchers.
+ */
 export function orpcRouterPlugin(options: ORPCRouterPluginOptions): Plugin {
   let proceduresDir: string
   let outputPath: string
   let server: ViteDevServer | undefined
   let updateTimer: ReturnType<typeof setTimeout> | undefined
 
+  /**
+   * Debounces regeneration after a watched procedure is added or removed.
+   * Generator failures are logged through Vite's logger.
+   * @returns A promise resolving after the update has been scheduled.
+   */
   async function update() {
     if (!server) return
     clearTimeout(updateTimer)

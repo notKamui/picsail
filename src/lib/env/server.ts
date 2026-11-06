@@ -14,6 +14,13 @@ export const env = createEnv({
       .int()
       .positive()
       .default(20 * 1024 * 1024),
+    IMAGE_CACHE_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(1024 * 1024 * 1024),
+    IMAGE_CACHE_MAX_ITEMS: z.coerce.number().int().positive().default(1000),
+    IMAGE_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(30),
     DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().min(1),
     S3_ENDPOINT: z.url(),
