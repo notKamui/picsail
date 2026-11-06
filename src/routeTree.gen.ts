@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
@@ -24,6 +25,11 @@ import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/in
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin/': typeof AdminIndexRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin': typeof AdminIndexRoute
   '/design': typeof DesignIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin/': typeof AdminIndexRoute
   '/design/': typeof DesignIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/f/$'
     | '/api/$'
+    | '/admin/'
     | '/design/'
     | '/sign-in/'
     | '/sign-up/'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/f/$'
     | '/api/$'
+    | '/admin'
     | '/design'
     | '/sign-in'
     | '/sign-up'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/f/$'
     | '/api/$'
+    | '/admin/'
     | '/design/'
     | '/sign-in/'
     | '/sign-up/'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FSplatRouteRoute: typeof FSplatRouteRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   DesignIndexRoute: typeof DesignIndexRoute
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -259,6 +279,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FSplatRouteRoute: FSplatRouteRoute,
   ApiSplatRoute: ApiSplatRoute,
+  AdminIndexRoute: AdminIndexRoute,
   DesignIndexRoute: DesignIndexRoute,
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
