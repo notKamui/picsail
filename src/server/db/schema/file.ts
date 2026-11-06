@@ -30,8 +30,22 @@ export const file = pgTable(
   ],
 )
 
+export const imageVariantCache = pgTable(
+  'image_variant_cache',
+  {
+    key: text('key').primaryKey(),
+    blobSha256: text('blob_sha256')
+      .notNull()
+      .references(() => blob.sha256, { onDelete: 'cascade' }),
+    byteSize: bigint('byte_size', { mode: 'number' }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('image_variant_cache_created_at_idx').on(table.createdAt)],
+)
+
 export const blobRelations = relations(blob, ({ many }) => ({
   files: many(file),
+  variants: many(imageVariantCache),
 }))
 
 export const fileRelations = relations(file, ({ one }) => ({
@@ -41,6 +55,13 @@ export const fileRelations = relations(file, ({ one }) => ({
   }),
   blob: one(blob, {
     fields: [file.blobSha256],
+    references: [blob.sha256],
+  }),
+}))
+
+export const imageVariantCacheRelations = relations(imageVariantCache, ({ one }) => ({
+  blob: one(blob, {
+    fields: [imageVariantCache.blobSha256],
     references: [blob.sha256],
   }),
 }))

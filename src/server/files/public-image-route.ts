@@ -14,6 +14,14 @@ type TransformResolution =
   | { kind: 'invalid' }
   | { kind: 'unsupported' }
 
+/**
+ * Handles GET requests for public originals and resized images. It parses the path,
+ * dispatches to file serving, and maps known errors to HTTP responses; generating
+ * a variant may read and write S3 and update the database cache catalog.
+ * @param request - Incoming request whose URL supplies the file and modifiers.
+ * @returns An image response, or a 400, 404, 415 or 501 response for known failures.
+ * @throws Unexpected storage, database and processing errors.
+ */
 export async function handlePublicImageRequest(request: Request) {
   const parsedUrl = parsePublicImageUrl(new URL(request.url).pathname)
   if (!parsedUrl.success) {
@@ -50,6 +58,12 @@ export async function handlePublicImageRequest(request: Request) {
   })
 }
 
+/**
+ * Selects what the public route can currently execute from parsed modifiers.
+ * For multiple resize tokens, the last size wins; force-size selects cover fit.
+ * @param transforms - Parsed modifiers in URL order.
+ * @returns An original, resize, invalid or unsupported resolution.
+ */
 function resolveTransforms(transforms: ImageTransform[]): TransformResolution {
   if (transforms.length === 0) return { kind: 'original' }
 

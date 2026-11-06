@@ -5,11 +5,23 @@ import { db } from '@/server/db'
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 export type DbOrTransaction = Transaction | typeof db
 
+/**
+ * Selects the first row from a query result, or null when it is empty; it does not
+ * verify that the result contains at most one row.
+ * @param values - Rows returned by a database lookup.
+ * @returns The first row or null.
+ */
 export const takeUniqueOrNull = takeUniqueOr(() => null)
 
 type TableId<TTable extends AnyPgTable<{ columns: { id: PgColumn } }>> =
   TTable['_']['columns']['id']['_']['data']
 
+/**
+ * Creates a query-result handler for lookups expected to return at most one row.
+ * It selects the first result and does not check whether additional rows exist.
+ * @param or - Invoked on an empty result; may return a fallback or throw.
+ * @returns A function mapping a result array to its first row or the fallback.
+ */
 export function takeUniqueOr<E = never>(
   or: () => E,
 ): <T extends any[]>(values: T) => [E] extends [never] ? T[number] : E | T[number] {
@@ -20,6 +32,15 @@ export function takeUniqueOr<E = never>(
   }
 }
 
+/**
+ * Counts matching rows and retrieves one page by first selecting ordered IDs.
+ * Used for file listings to avoid applying offset to full joined rows. The optional
+ * fetch callback hydrates IDs inside the transaction; its result is reordered to
+ * match the ID page and missing IDs are omitted.
+ * @param options - Table and optional filter, stable order, 1-based page, requested
+ * size, optional size bounds and optional ID-based item fetcher.
+ * @returns Items, total count, effective size and page, and at least one total page.
+ */
 export async function paginated<
   TTable extends AnyPgTable<{ columns: { id: PgColumn } }>,
   TItem extends { id: TableId<TTable> } = InferSelectModel<TTable>,
@@ -101,6 +122,12 @@ export async function paginated<
   })
 }
 
+/**
+ * Builds a Drizzle ON CONFLICT update map using values from the excluded row.
+ * @param table - Table containing the columns being updated.
+ * @param columns - Table column keys to assign from PostgreSQL's excluded row.
+ * @returns A key-to-SQL-expression map for an insert conflict update.
+ */
 export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T['_']['columns']>(
   table: T,
   columns: Q[],

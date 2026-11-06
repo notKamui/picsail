@@ -17,6 +17,11 @@ export default os
   .input(z.object({ id: z.string().regex(/^[a-f0-9]{12}$/i) }))
   .handler(({ input }) => getFileMetadata(input.id))
 
+/**
+ * Fetches joined file/blob metadata for the public oRPC metadata procedure.
+ * @param id - Public file ID.
+ * @returns API metadata with size in bytes, or null when the file is absent.
+ */
 async function getFileMetadata(id: string) {
   const row = await db
     .select({

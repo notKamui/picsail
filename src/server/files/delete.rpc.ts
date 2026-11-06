@@ -8,6 +8,7 @@ import { blob, file } from '@/server/db/schema/file'
 import type { Transaction } from '@/server/db/utils'
 import { storage } from '@/server/storage'
 import { lockBlob } from './blob-lock'
+import { removeCachedVariants } from './variant-cache'
 
 export default os
   .meta(
@@ -39,6 +40,14 @@ export default os
     return { deleted: true }
   })
 
+/**
+ * Deletes an authorized file and, if it was the last reference, its blob row.
+ * Runs under the blob advisory lock; S3 cleanup is performed separately.
+ * @param id - Public file ID to delete.
+ * @param user - Authenticated user ID and optional role used for authorization.
+ * @returns The unreferenced blob hash for storage cleanup, or undefined if shared.
+ * @throws NOT_FOUND or FORBIDDEN when the file is absent or not owned/administered.
+ */
 async function deleteFileRecord(
   id: string,
   user: { id: string; role?: string | null },
@@ -65,6 +74,15 @@ async function deleteFileRecord(
   })
 }
 
+/**
+ * Rechecks ownership after the blob lock is acquired so concurrent deletion is
+ * observed before removing a file row.
+ * @param tx - Active transaction holding the blob lock.
+ * @param id - Public file ID.
+ * @param user - Authenticated user and optional admin role.
+ * @returns A promise resolving without a value if deletion is permitted.
+ * @throws NOT_FOUND for a missing file or FORBIDDEN for an unauthorized user.
+ */
 async function ensureCanDeleteFile(
   tx: Transaction,
   id: string,
@@ -82,6 +100,13 @@ async function ensureCanDeleteFile(
   }
 }
 
+/**
+ * Counts remaining references after a file deletion and removes the blob row only
+ * when none remain. Its cache catalog rows are deleted by the database cascade.
+ * @param tx - Active transaction holding the blob lock.
+ * @param sha256 - Deleted file's content hash.
+ * @returns The hash when storage cleanup is needed, otherwise undefined.
+ */
 async function deleteBlobRecordIfUnreferenced(tx: Transaction, sha256: string) {
   const [remainingFiles] = await tx
     .select({ count: count() })
@@ -94,6 +119,13 @@ async function deleteBlobRecordIfUnreferenced(tx: Transaction, sha256: string) {
   return sha256
 }
 
+/**
+ * Cleans up the original and cached S3 objects after the blob row is committed
+ * deleted. Rechecks under the blob lock to avoid removing a concurrently re-uploaded
+ * blob; storage deletes are external side effects and cannot be rolled back.
+ * @param sha256 - Hash of the potentially unreferenced blob.
+ * @returns A promise resolving after cleanup or a recreated-blob skip.
+ */
 async function removeUnreferencedBlob(sha256: string) {
   await db.transaction(async (tx) => {
     await lockBlob(tx, sha256)
@@ -107,7 +139,7 @@ async function removeUnreferencedBlob(sha256: string) {
 
     if (!recreatedBlob) {
       await storage.remove(`blobs/${sha256}`)
-      await storage.removePrefix(`cache/${sha256}/`)
+      await removeCachedVariants(tx, sha256)
     }
   })
 }

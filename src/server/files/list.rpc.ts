@@ -35,6 +35,14 @@ export default os
     }
   })
 
+/**
+ * Builds an authenticated owner's file listing by paginating IDs and joining blob
+ * metadata. Database reads occur in the pagination transaction.
+ * @param ownerId - ID of the owner whose files may be listed.
+ * @param requestedPage - Requested 1-based page.
+ * @param requestedPageSize - Requested size, clamped to 5–50 by pagination.
+ * @returns File details with public URLs and effective pagination metadata.
+ */
 async function listFilesForUser(ownerId: string, requestedPage: number, requestedPageSize: number) {
   const result = await paginated({
     table: file,

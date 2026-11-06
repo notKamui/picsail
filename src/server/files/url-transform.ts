@@ -67,6 +67,12 @@ const transformParsers: TransformParser[] = [
   parseFilter,
 ]
 
+/**
+ * Parses a public /f/ URL before the route dispatches original or transformed content.
+ * @param pathname - URL pathname, including the /f/ prefix and final filename.
+ * @returns Normalized ID, extension and ordered transforms, or a failure reason for
+ * an invalid filename/path or invalid transform.
+ */
 export function parsePublicImageUrl(pathname: string): ParsedImageUrlResult {
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length < 2 || segments[0] !== 'f') {
@@ -90,6 +96,12 @@ export function parsePublicImageUrl(pathname: string): ParsedImageUrlResult {
   }
 }
 
+/**
+ * Parses the ordered modifier segments of a public image URL without executing them.
+ * Recognized modifiers may still be unsupported by the route's transform resolver.
+ * @param tokens - Path segments before the filename.
+ * @returns Typed transforms in input order or a failure if any token is invalid.
+ */
 export function parseImageTransforms(tokens: string[]): ParseResult<ImageTransform[]> {
   const transforms: ImageTransform[] = []
 
@@ -107,6 +119,11 @@ export function parseImageTransforms(tokens: string[]): ParseResult<ImageTransfo
   return { success: true, value: transforms }
 }
 
+/**
+ * Dispatches one normalized path token through the transform parsers.
+ * @param token - Lowercase transform segment.
+ * @returns A recognized transform, or null if no parser accepts it.
+ */
 function parseImageTransform(token: string): ImageTransform | null {
   for (const parser of transformParsers) {
     const transform = parser(token)
@@ -116,6 +133,11 @@ function parseImageTransform(token: string): ImageTransform | null {
   return null
 }
 
+/**
+ * Recognizes size segments such as 800, 800x600 and x600.
+ * @param token - Lowercase transform segment.
+ * @returns A resize transform, null for invalid dimensions, or undefined if not a size.
+ */
 function parseDimensions(token: string): ImageTransform | null | undefined {
   if (/^\d+$/.test(token)) return parseResizeDimensions(Number(token), undefined)
 
@@ -129,6 +151,12 @@ function parseDimensions(token: string): ImageTransform | null | undefined {
   )
 }
 
+/**
+ * Validates requested dimensions against the supported per-axis limit.
+ * @param width - Requested width, or undefined if omitted.
+ * @param height - Requested height, or undefined if omitted.
+ * @returns A resize transform or null for a nonpositive, unsafe or oversized value.
+ */
 function parseResizeDimensions(
   width: number | undefined,
   height: number | undefined,
@@ -145,6 +173,11 @@ function parseResizeDimensions(
   return { type: 'resize', width, height }
 }
 
+/**
+ * Recognizes force-size and rotation modifiers for future transform resolution.
+ * @param token - Lowercase transform segment.
+ * @returns The corresponding typed modifier, or undefined when it does not match.
+ */
 function parseGeometryModifier(token: string): ImageTransform | undefined {
   if (token === 'forcesize') return { type: 'force-size' }
   if (token === 'upside' || token === 'left' || token === 'right') {
@@ -152,10 +185,20 @@ function parseGeometryModifier(token: string): ImageTransform | undefined {
   }
 }
 
+/**
+ * Recognizes image output-format modifiers without converting an image.
+ * @param token - Lowercase transform segment.
+ * @returns A format modifier for webp or avif, otherwise undefined.
+ */
 function parseFormatModifier(token: string): ImageTransform | undefined {
   if (token === 'webp' || token === 'avif') return { type: 'format', format: token }
 }
 
+/**
+ * Recognizes future GIF-to-video conversion and serving-mode modifiers.
+ * @param token - Lowercase transform segment.
+ * @returns A video modifier or undefined if the segment is unrelated.
+ */
 function parseVideoModifier(token: string): ImageTransform | undefined {
   if (token === 'mp4') return { type: 'video', format: 'mp4' }
   if (token === 'raw' || token === 'preview' || token === 'download') {
@@ -163,6 +206,11 @@ function parseVideoModifier(token: string): ImageTransform | undefined {
   }
 }
 
+/**
+ * Parses recognized PictShare filter names and optional numeric arguments.
+ * @param token - Lowercase filter segment, with underscore-separated arguments.
+ * @returns A typed filter or null if the name, argument count or values are invalid.
+ */
 function parseFilter(token: string): ImageTransform | null {
   const separator = token.indexOf('_')
   const name = separator === -1 ? token : token.slice(0, separator)

@@ -5,8 +5,8 @@ import * as z from 'zod'
 import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
-import { lockBlob } from './blob-lock'
 import { resizeImageBytes, type ImageDimensions } from './image-processing'
+import { openCachedVariant, storeCachedVariant } from './variant-cache'
 
 export default os
   .meta(
@@ -48,6 +48,13 @@ export default os
   )
   .handler(async ({ input }) => getFileContentResponse(input))
 
+/**
+ * Opens an original for the public file route and the oRPC content procedure.
+ * Reads file/blob metadata from PostgreSQL and the original stream from S3.
+ * @param input - Public file ID and expected extension.
+ * @returns A 200 response description with MIME, length and readable body stream.
+ * @throws NOT_FOUND if the file, extension or stored object is missing.
+ */
 export async function getFileContentResponse(input: { id: string; extension: string }) {
   const fileContent = await findFileContent(input.id)
   assertFileExists(fileContent, input.extension)
@@ -58,6 +65,14 @@ export async function getFileContentResponse(input: { id: string; extension: str
   return createFileResponse(fileContent.mime, fileContent.byteSize, object.body)
 }
 
+/**
+ * Serves a public resized image from cache or generates and stores it on a miss.
+ * Reads the source into memory and may update the cache and evict other variants.
+ * @param input - Public file ID and expected extension.
+ * @param dimensions - Width, height and fit used for the variant and cache key.
+ * @returns A 200 response description with the encoded variant stream and headers.
+ * @throws NOT_FOUND for missing content or UnsupportedImageTransformError for GIFs.
+ */
 export async function getTransformedFileContentResponse(
   input: { id: string; extension: string },
   dimensions: ImageDimensions,
@@ -67,7 +82,7 @@ export async function getTransformedFileContentResponse(
   if (fileContent.mime === 'image/gif') throw new UnsupportedImageTransformError()
 
   const cacheKey = `cache/${fileContent.sha256}/resize-${dimensions.fit ?? 'inside'}-${dimensions.width ?? ''}x${dimensions.height ?? ''}`
-  const cachedObject = await storage.open(cacheKey)
+  const cachedObject = await openCachedVariant(cacheKey, fileContent.sha256)
   if (cachedObject) {
     return createFileResponse(
       fileContent.mime,
@@ -81,17 +96,7 @@ export async function getTransformedFileContentResponse(
   const sourceBytes = new Uint8Array(await new Response(source.body).arrayBuffer())
   const transformedBytes = await resizeImageBytes(sourceBytes, dimensions)
 
-  await db.transaction(async (tx) => {
-    await lockBlob(tx, fileContent.sha256)
-    const existingBlob = await tx
-      .select({ sha256: blob.sha256 })
-      .from(blob)
-      .where(eq(blob.sha256, fileContent.sha256))
-      .then(takeUniqueOrNull)
-
-    if (!existingBlob) throw new ORPCError('NOT_FOUND')
-    await storage.put(cacheKey, transformedBytes, fileContent.mime)
-  })
+  await storeCachedVariant(cacheKey, fileContent.sha256, transformedBytes, fileContent.mime)
 
   return createFileResponse(
     fileContent.mime,
@@ -107,6 +112,13 @@ export class UnsupportedImageTransformError extends Error {
   }
 }
 
+/**
+ * Validates metadata before serving an original or transformed public file.
+ * @param fileContent - Metadata lookup result, possibly null.
+ * @param extension - Extension requested in the public URL.
+ * @returns Nothing; narrows fileContent to a non-null value.
+ * @throws NOT_FOUND if metadata is absent or the extension does not match.
+ */
 function assertFileExists(
   fileContent: Awaited<ReturnType<typeof findFileContent>>,
   extension: string,
@@ -116,6 +128,13 @@ function assertFileExists(
   }
 }
 
+/**
+ * Constructs the shared oRPC/route response description without consuming its body.
+ * @param mime - Content type of the encoded image.
+ * @param byteSize - Known body size, or undefined to omit Content-Length.
+ * @param body - Readable stream owned by the response consumer.
+ * @returns Status, safe content headers and the supplied stream.
+ */
 function createFileResponse(
   mime: string,
   byteSize: number | undefined,
@@ -132,6 +151,11 @@ function createFileResponse(
   }
 }
 
+/**
+ * Looks up the blob storage metadata needed to serve a public file.
+ * @param id - Public file ID.
+ * @returns Joined metadata or null if no matching file and blob exist.
+ */
 async function findFileContent(id: string) {
   return db
     .select({

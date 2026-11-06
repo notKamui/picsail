@@ -1,5 +1,10 @@
 import type { Plugin } from 'vite'
 
+/**
+ * Creates a development-only Vite plugin that initializes the S3 bucket when the
+ * dev server starts. Initialization is asynchronous; failures are logged.
+ * @returns The Vite plugin; no storage requests occur until server configuration.
+ */
 export function ensureBucketPlugin(): Plugin {
   return {
     name: 'picsail-ensure-bucket',
