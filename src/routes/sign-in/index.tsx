@@ -1,5 +1,6 @@
 import { useForm } from '@tanstack/react-form'
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
+import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
 
 const signInSchema = z.object({
@@ -28,6 +30,8 @@ export const Route = createFileRoute('/sign-in/')({
 
 function SignInPage() {
   const navigate = useNavigate()
+  const router = useRouter()
+  const queryClient = useQueryClient()
   const [authError, setAuthError] = useState<string | null>(null)
   const form = useForm({
     defaultValues: {
@@ -48,6 +52,8 @@ function SignInPage() {
         setAuthError(result.error.message ?? 'Could not sign in')
         return
       }
+      await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions().queryKey })
+      await router.invalidate()
       await navigate({ to: '/' })
     },
   })
