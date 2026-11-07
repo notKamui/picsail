@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Moon, Sun } from 'lucide-react'
+import { ImagePlus, Images, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Field,
   FieldDescription,
@@ -20,6 +21,14 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@/components/ui/sidebar'
 import { article, eyebrow, link, text, title } from '@/components/ui/typography'
 
 export const Route = createFileRoute('/design/')({
@@ -187,6 +196,51 @@ function DesignPage() {
             <span className={text({ variant: 'small' })}>Right</span>
           </div>
           <Separator />
+        </Section>
+
+        <Section kicker="Patterns" heading="Workspace navigation">
+          <p className={text({ variant: 'muted' })}>
+            The same navigation pattern is used in the authenticated sidebar and mobile navigation.
+          </p>
+          <SidebarProvider className="min-h-0">
+            <Sidebar
+              collapsible="none"
+              className="max-w-xs rounded-xl border border-sidebar-border p-3"
+            >
+              <SidebarContent>
+                <nav aria-label="Workspace navigation example">
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton size="lg">
+                        <ImagePlus aria-hidden="true" /> Upload
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton isActive size="lg">
+                        <Images aria-hidden="true" /> My files
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton size="lg">
+                        <ShieldCheck aria-hidden="true" /> Administration
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </nav>
+              </SidebarContent>
+            </Sidebar>
+          </SidebarProvider>
+        </Section>
+
+        <Section kicker="Patterns" heading="Empty states">
+          <p className={text({ variant: 'muted' })}>
+            Explain what belongs here and how to get started, without inventing content.
+          </p>
+          <EmptyState
+            icon={<ImagePlus aria-hidden="true" />}
+            title="Your collection starts here."
+            description="Use Upload image to add your first image."
+          />
         </Section>
       </div>
     </main>
