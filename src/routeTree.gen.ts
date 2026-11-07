@@ -10,26 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as GuestRouteRouteImport } from './routes/_guest/route'
+import { Route as WorkspaceRouteRouteImport } from './routes/_workspace/route'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as FSplatRouteRouteImport } from './routes/f/$/route'
-import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
-import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
+import { Route as GuestSignInIndexRouteImport } from './routes/_guest/sign-in/index'
+import { Route as GuestSignUpIndexRouteImport } from './routes/_guest/sign-up/index'
+import { Route as WorkspaceAdminIndexRouteImport } from './routes/_workspace/admin/index'
+import { Route as WorkspaceFilesIndexRouteImport } from './routes/_workspace/files/index'
+import { Route as WorkspaceUploadIndexRouteImport } from './routes/_workspace/upload/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
-import { Route as TestFilesIndexRouteImport } from './routes/test/files/index'
-import { Route as TestUploadIndexRouteImport } from './routes/test/upload/index'
-import { Route as TestFilesIdIndexRouteImport } from './routes/test/files/$id/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+const GuestRouteRoute = GuestRouteRouteImport.update({
+  id: '/_guest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceRouteRoute = WorkspaceRouteRouteImport.update({
+  id: '/_workspace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -47,15 +51,30 @@ const FSplatRouteRoute = FSplatRouteRouteImport.update({
   path: '/f/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignInIndexRoute = SignInIndexRouteImport.update({
+const GuestSignInIndexRoute = GuestSignInIndexRouteImport.update({
   id: '/sign-in/',
   path: '/sign-in/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GuestRouteRoute,
 } as any)
-const SignUpIndexRoute = SignUpIndexRouteImport.update({
+const GuestSignUpIndexRoute = GuestSignUpIndexRouteImport.update({
   id: '/sign-up/',
   path: '/sign-up/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GuestRouteRoute,
+} as any)
+const WorkspaceAdminIndexRoute = WorkspaceAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => WorkspaceRouteRoute,
+} as any)
+const WorkspaceFilesIndexRoute = WorkspaceFilesIndexRouteImport.update({
+  id: '/files/',
+  path: '/files/',
+  getParentRoute: () => WorkspaceRouteRoute,
+} as any)
+const WorkspaceUploadIndexRoute = WorkspaceUploadIndexRouteImport.update({
+  id: '/upload/',
+  path: '/upload/',
+  getParentRoute: () => WorkspaceRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -67,64 +86,48 @@ const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
   path: '/api/rpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TestFilesIndexRoute = TestFilesIndexRouteImport.update({
-  id: '/test/files/',
-  path: '/test/files/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TestUploadIndexRoute = TestUploadIndexRouteImport.update({
-  id: '/test/upload/',
-  path: '/test/upload/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TestFilesIdIndexRoute = TestFilesIdIndexRouteImport.update({
-  id: '/test/files/$id/',
-  path: '/test/files/$id/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
-  '/admin/': typeof AdminIndexRoute
   '/design/': typeof DesignIndexRoute
-  '/sign-in/': typeof SignInIndexRoute
-  '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
-  '/test/files/': typeof TestFilesIndexRoute
-  '/test/upload/': typeof TestUploadIndexRoute
-  '/test/files/$id/': typeof TestFilesIdIndexRoute
+  '/sign-in/': typeof GuestSignInIndexRoute
+  '/sign-up/': typeof GuestSignUpIndexRoute
+  '/admin/': typeof WorkspaceAdminIndexRoute
+  '/files/': typeof WorkspaceFilesIndexRoute
+  '/upload/': typeof WorkspaceUploadIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
-  '/admin': typeof AdminIndexRoute
   '/design': typeof DesignIndexRoute
-  '/sign-in': typeof SignInIndexRoute
-  '/sign-up': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
-  '/test/files': typeof TestFilesIndexRoute
-  '/test/upload': typeof TestUploadIndexRoute
-  '/test/files/$id': typeof TestFilesIdIndexRoute
+  '/sign-in': typeof GuestSignInIndexRoute
+  '/sign-up': typeof GuestSignUpIndexRoute
+  '/admin': typeof WorkspaceAdminIndexRoute
+  '/files': typeof WorkspaceFilesIndexRoute
+  '/upload': typeof WorkspaceUploadIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_guest': typeof GuestRouteRouteWithChildren
+  '/_workspace': typeof WorkspaceRouteRouteWithChildren
   '/f/$': typeof FSplatRouteRoute
   '/api/$': typeof ApiSplatRoute
-  '/admin/': typeof AdminIndexRoute
   '/design/': typeof DesignIndexRoute
-  '/sign-in/': typeof SignInIndexRoute
-  '/sign-up/': typeof SignUpIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
-  '/test/files/': typeof TestFilesIndexRoute
-  '/test/upload/': typeof TestUploadIndexRoute
-  '/test/files/$id/': typeof TestFilesIdIndexRoute
+  '/_guest/sign-in/': typeof GuestSignInIndexRoute
+  '/_guest/sign-up/': typeof GuestSignUpIndexRoute
+  '/_workspace/admin/': typeof WorkspaceAdminIndexRoute
+  '/_workspace/files/': typeof WorkspaceFilesIndexRoute
+  '/_workspace/upload/': typeof WorkspaceUploadIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,58 +135,53 @@ export interface FileRouteTypes {
     | '/'
     | '/f/$'
     | '/api/$'
-    | '/admin/'
     | '/design/'
-    | '/sign-in/'
-    | '/sign-up/'
     | '/api/auth/$'
     | '/api/rpc/$'
-    | '/test/files/'
-    | '/test/upload/'
-    | '/test/files/$id/'
+    | '/sign-in/'
+    | '/sign-up/'
+    | '/admin/'
+    | '/files/'
+    | '/upload/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/f/$'
     | '/api/$'
-    | '/admin'
     | '/design'
-    | '/sign-in'
-    | '/sign-up'
     | '/api/auth/$'
     | '/api/rpc/$'
-    | '/test/files'
-    | '/test/upload'
-    | '/test/files/$id'
+    | '/sign-in'
+    | '/sign-up'
+    | '/admin'
+    | '/files'
+    | '/upload'
   id:
     | '__root__'
     | '/'
+    | '/_guest'
+    | '/_workspace'
     | '/f/$'
     | '/api/$'
-    | '/admin/'
     | '/design/'
-    | '/sign-in/'
-    | '/sign-up/'
     | '/api/auth/$'
     | '/api/rpc/$'
-    | '/test/files/'
-    | '/test/upload/'
-    | '/test/files/$id/'
+    | '/_guest/sign-in/'
+    | '/_guest/sign-up/'
+    | '/_workspace/admin/'
+    | '/_workspace/files/'
+    | '/_workspace/upload/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GuestRouteRoute: typeof GuestRouteRouteWithChildren
+  WorkspaceRouteRoute: typeof WorkspaceRouteRouteWithChildren
   FSplatRouteRoute: typeof FSplatRouteRoute
   ApiSplatRoute: typeof ApiSplatRoute
-  AdminIndexRoute: typeof AdminIndexRoute
   DesignIndexRoute: typeof DesignIndexRoute
-  SignInIndexRoute: typeof SignInIndexRoute
-  SignUpIndexRoute: typeof SignUpIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
-  TestFilesIndexRoute: typeof TestFilesIndexRoute
-  TestUploadIndexRoute: typeof TestUploadIndexRoute
-  TestFilesIdIndexRoute: typeof TestFilesIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,11 +193,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
+    '/_guest': {
+      id: '/_guest'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof GuestRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_workspace': {
+      id: '/_workspace'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkspaceRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -223,19 +228,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FSplatRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-in/': {
-      id: '/sign-in/'
+    '/_guest/sign-in/': {
+      id: '/_guest/sign-in/'
       path: '/sign-in'
       fullPath: '/sign-in/'
-      preLoaderRoute: typeof SignInIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof GuestSignInIndexRouteImport
+      parentRoute: typeof GuestRouteRoute
     }
-    '/sign-up/': {
-      id: '/sign-up/'
+    '/_guest/sign-up/': {
+      id: '/_guest/sign-up/'
       path: '/sign-up'
       fullPath: '/sign-up/'
-      preLoaderRoute: typeof SignUpIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof GuestSignUpIndexRouteImport
+      parentRoute: typeof GuestRouteRoute
+    }
+    '/_workspace/admin/': {
+      id: '/_workspace/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof WorkspaceAdminIndexRouteImport
+      parentRoute: typeof WorkspaceRouteRoute
+    }
+    '/_workspace/files/': {
+      id: '/_workspace/files/'
+      path: '/files'
+      fullPath: '/files/'
+      preLoaderRoute: typeof WorkspaceFilesIndexRouteImport
+      parentRoute: typeof WorkspaceRouteRoute
+    }
+    '/_workspace/upload/': {
+      id: '/_workspace/upload/'
+      path: '/upload'
+      fullPath: '/upload/'
+      preLoaderRoute: typeof WorkspaceUploadIndexRouteImport
+      parentRoute: typeof WorkspaceRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -251,43 +277,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/test/files/': {
-      id: '/test/files/'
-      path: '/test/files'
-      fullPath: '/test/files/'
-      preLoaderRoute: typeof TestFilesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/test/upload/': {
-      id: '/test/upload/'
-      path: '/test/upload'
-      fullPath: '/test/upload/'
-      preLoaderRoute: typeof TestUploadIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/test/files/$id/': {
-      id: '/test/files/$id/'
-      path: '/test/files/$id'
-      fullPath: '/test/files/$id/'
-      preLoaderRoute: typeof TestFilesIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
+interface GuestRouteRouteChildren {
+  GuestSignInIndexRoute: typeof GuestSignInIndexRoute
+  GuestSignUpIndexRoute: typeof GuestSignUpIndexRoute
+}
+
+const GuestRouteRouteChildren: GuestRouteRouteChildren = {
+  GuestSignInIndexRoute: GuestSignInIndexRoute,
+  GuestSignUpIndexRoute: GuestSignUpIndexRoute,
+}
+
+const GuestRouteRouteWithChildren = GuestRouteRoute._addFileChildren(
+  GuestRouteRouteChildren,
+)
+
+interface WorkspaceRouteRouteChildren {
+  WorkspaceAdminIndexRoute: typeof WorkspaceAdminIndexRoute
+  WorkspaceFilesIndexRoute: typeof WorkspaceFilesIndexRoute
+  WorkspaceUploadIndexRoute: typeof WorkspaceUploadIndexRoute
+}
+
+const WorkspaceRouteRouteChildren: WorkspaceRouteRouteChildren = {
+  WorkspaceAdminIndexRoute: WorkspaceAdminIndexRoute,
+  WorkspaceFilesIndexRoute: WorkspaceFilesIndexRoute,
+  WorkspaceUploadIndexRoute: WorkspaceUploadIndexRoute,
+}
+
+const WorkspaceRouteRouteWithChildren = WorkspaceRouteRoute._addFileChildren(
+  WorkspaceRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GuestRouteRoute: GuestRouteRouteWithChildren,
+  WorkspaceRouteRoute: WorkspaceRouteRouteWithChildren,
   FSplatRouteRoute: FSplatRouteRoute,
   ApiSplatRoute: ApiSplatRoute,
-  AdminIndexRoute: AdminIndexRoute,
   DesignIndexRoute: DesignIndexRoute,
-  SignInIndexRoute: SignInIndexRoute,
-  SignUpIndexRoute: SignUpIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
-  TestFilesIndexRoute: TestFilesIndexRoute,
-  TestUploadIndexRoute: TestUploadIndexRoute,
-  TestFilesIdIndexRoute: TestFilesIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

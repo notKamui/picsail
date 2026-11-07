@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { adminFilesQueryOptions, DEFAULT_FILE_PAGE_SIZE } from '@/lib/file-list-query'
@@ -8,14 +8,10 @@ import { orpc } from '@/lib/orpc'
 import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
 
-export const Route = createFileRoute('/admin/')({
+export const Route = createFileRoute('/_workspace/admin/')({
   head: () => ({ meta: [{ title: 'Admin files · Picsail' }] }),
-  beforeLoad: async ({ context }) => {
-    const user = await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
-    return { user }
-  },
   loader: async ({ context }) => {
-    if (!context.user?.isAdmin) return
+    if (!context.user.isAdmin) return
     const [error] = await tryAsync(
       context.queryClient.query({
         ...adminFilesQueryOptions(context.user.id, 1, DEFAULT_FILE_PAGE_SIZE),
@@ -28,48 +24,27 @@ export const Route = createFileRoute('/admin/')({
 })
 
 function AdminPage() {
-  const { data: user, error } = useQuery(currentUserQueryOptions())
+  const { data: user } = useQuery(currentUserQueryOptions())
 
   return (
-    <main className="mx-auto min-h-svh max-w-5xl px-5 pb-20 sm:px-8">
-      <header className="flex items-center justify-between gap-4 border-b border-border py-6">
-        <Link to="/" className="font-serif text-2xl font-semibold tracking-tight">
-          Picsail<span className="text-muted-foreground">.</span>
-        </Link>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/">Back to my files</Link>
-        </Button>
-      </header>
-      <section className="pt-12" aria-labelledby="admin-heading">
-        <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-          Administration
+    <section className="pt-10 sm:pt-14" aria-labelledby="admin-heading">
+      <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+        Administration
+      </p>
+      <h1 id="admin-heading" className="mt-3 font-serif text-4xl font-semibold">
+        Recent files
+      </h1>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Review and remove files uploaded by any user.
+      </p>
+      {!user?.isAdmin ? (
+        <p role="alert" className="mt-8 text-sm text-destructive">
+          Administrator access is required.
         </p>
-        <h1 id="admin-heading" className="mt-3 font-serif text-4xl font-semibold">
-          Recent files
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Review and remove files uploaded by any user.
-        </p>
-        {error ? (
-          <p role="alert" className="mt-8 text-sm text-destructive">
-            Could not verify your session. Please refresh the page.
-          </p>
-        ) : !user ? (
-          <div className="mt-8 space-y-4">
-            <p className="text-sm text-muted-foreground">Sign in to access administration.</p>
-            <Button asChild>
-              <Link to="/sign-in">Sign in</Link>
-            </Button>
-          </div>
-        ) : !user.isAdmin ? (
-          <p role="alert" className="mt-8 text-sm text-destructive">
-            Administrator access is required.
-          </p>
-        ) : (
-          <AdminFiles key={user.id} userId={user.id} />
-        )}
-      </section>
-    </main>
+      ) : (
+        <AdminFiles key={user.id} userId={user.id} />
+      )}
+    </section>
   )
 }
 

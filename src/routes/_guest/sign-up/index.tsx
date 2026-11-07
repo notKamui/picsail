@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import * as z from 'zod'
+import { AuthPageLayout } from '@/components/auth-page-layout'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,6 +17,8 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { eyebrow, title } from '@/components/ui/typography'
 import { authClient } from '@/lib/auth-client'
+import { safeAuthRedirect } from '@/lib/auth-redirect'
+import { toFieldErrors } from '@/lib/form-errors'
 import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
 
@@ -25,7 +28,11 @@ const signUpSchema = z.object({
   password: z.string().min(8, 'Use at least 8 characters'),
 })
 
-export const Route = createFileRoute('/sign-up/')({
+export const Route = createFileRoute('/_guest/sign-up/')({
+  validateSearch: z.object({
+    redirect: z.unknown().optional(),
+  }),
+  head: () => ({ meta: [{ title: 'Create account · Picsail' }] }),
   component: SignUpPage,
 })
 
@@ -33,6 +40,8 @@ function SignUpPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { redirect } = Route.useSearch()
+  const returnTo = safeAuthRedirect(redirect)
   const [authError, setAuthError] = useState<string | null>(null)
   const form = useForm({
     defaultValues: {
@@ -55,17 +64,19 @@ function SignUpPage() {
         return
       }
       await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions().queryKey })
+      await navigate({ href: returnTo })
       await router.invalidate()
-      await navigate({ to: '/' })
     },
   })
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-md">
+    <AuthPageLayout>
+      <Card className="w-full max-w-md shadow-sm">
         <CardHeader>
           <p className={eyebrow()}>Picsail</p>
-          <CardTitle className={title({ h: 2 })}>Create account</CardTitle>
+          <CardTitle>
+            <h2 className={title({ h: 2 })}>Create account</h2>
+          </CardTitle>
           <CardDescription>Register with your email and choose a password.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -164,25 +175,12 @@ function SignUpPage() {
             )}
           </form.Subscribe>
           <Button variant="link" asChild className="w-full justify-center px-0">
-            <Link to="/sign-in">Already have an account? Sign in</Link>
+            <Link to="/sign-in" search={{ redirect: returnTo }}>
+              Already have an account? Sign in
+            </Link>
           </Button>
         </CardFooter>
       </Card>
-    </main>
+    </AuthPageLayout>
   )
-}
-
-function toFieldErrors(errors: ReadonlyArray<unknown>) {
-  return errors.flatMap((error) => {
-    if (typeof error === 'string') return [{ message: error }]
-    if (
-      error &&
-      typeof error === 'object' &&
-      'message' in error &&
-      typeof error.message === 'string'
-    ) {
-      return [{ message: error.message }]
-    }
-    return []
-  })
 }
