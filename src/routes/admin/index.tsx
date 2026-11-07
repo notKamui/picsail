@@ -3,10 +3,10 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { adminFilesQueryOptions, DEFAULT_FILE_PAGE_SIZE } from '@/lib/file-list-query'
+import { formatDateLong, formatNumber } from '@/lib/format'
 import { orpc } from '@/lib/orpc'
 import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
-import { useHydrated } from '@/lib/use-hydrated'
 
 export const Route = createFileRoute('/admin/')({
   head: () => ({ meta: [{ title: 'Admin files · Picsail' }] }),
@@ -74,7 +74,6 @@ function AdminPage() {
 }
 
 function AdminFiles({ userId }: { userId: string }) {
-  const hydrated = useHydrated()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_FILE_PAGE_SIZE)
   const [error, setError] = useState<string | null>(null)
@@ -120,8 +119,7 @@ function AdminFiles({ userId }: { userId: string }) {
     <div className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
-          {hydrated ? pagination.total.toLocaleString() : pagination.total}{' '}
-          {pagination.total === 1 ? 'file' : 'files'}
+          {formatNumber(pagination.total)} {pagination.total === 1 ? 'file' : 'files'}
         </p>
         <label className="flex items-center gap-2 text-sm">
           Per page
@@ -160,9 +158,8 @@ function AdminFiles({ userId }: { userId: string }) {
                     {file.ownerName} · {file.ownerEmail}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {file.mime} · {hydrated ? file.size.toLocaleString() : file.size} bytes ·{' '}
-                    {hydrated ? file.createdAt.toLocaleString() : file.createdAt.toISOString()} ·{' '}
-                    {file.id}
+                    {file.mime} · {formatNumber(file.size)} bytes · {formatDateLong(file.createdAt)}{' '}
+                    · {file.id}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
