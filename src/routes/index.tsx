@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { UploadWorkspace } from '@/components/upload-workspace'
 import { authClient } from '@/lib/auth-client'
+import { personalFilesQueryOptions } from '@/lib/file-list-query'
 import { orpc } from '@/lib/orpc'
 import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
@@ -12,7 +13,15 @@ import { tryAsync } from '@/lib/try'
 export const Route = createFileRoute('/')({
   head: () => ({ meta: [{ title: 'Picsail' }] }),
   beforeLoad: async ({ context }) => {
-    await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
+    const user = await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
+    return { user }
+  },
+  loader: async ({ context }) => {
+    if (!context.user) return
+    const [error] = await tryAsync(
+      context.queryClient.query(personalFilesQueryOptions(context.user.id, 1)),
+    )
+    if (error) console.error('Could not preload personal files:', error)
   },
   component: Home,
 })

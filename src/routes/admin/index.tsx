@@ -2,14 +2,27 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { adminFilesQueryOptions, DEFAULT_FILE_PAGE_SIZE } from '@/lib/file-list-query'
 import { orpc } from '@/lib/orpc'
 import { currentUserQueryOptions } from '@/lib/session-query'
 import { tryAsync } from '@/lib/try'
+import { useHydrated } from '@/lib/use-hydrated'
 
 export const Route = createFileRoute('/admin/')({
   head: () => ({ meta: [{ title: 'Admin files · Picsail' }] }),
   beforeLoad: async ({ context }) => {
-    await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
+    const user = await context.queryClient.query({ ...currentUserQueryOptions(), staleTime: 0 })
+    return { user }
+  },
+  loader: async ({ context }) => {
+    if (!context.user?.isAdmin) return
+    const [error] = await tryAsync(
+      context.queryClient.query({
+        ...adminFilesQueryOptions(context.user.id, 1, DEFAULT_FILE_PAGE_SIZE),
+        staleTime: 0,
+      }),
+    )
+    if (error) console.error('Could not preload admin files:', error)
   },
   component: AdminPage,
 })
@@ -61,18 +74,12 @@ function AdminPage() {
 }
 
 function AdminFiles({ userId }: { userId: string }) {
+  const hydrated = useHydrated()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(DEFAULT_FILE_PAGE_SIZE)
   const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
-  const files = useQuery(
-    orpc.admin.listFiles.queryOptions({
-      input: { page, pageSize },
-      queryKey: [...orpc.admin.listFiles.key(), userId, page, pageSize],
-      staleTime: 0,
-      retry: false,
-    }),
-  )
+  const files = useQuery(adminFilesQueryOptions(userId, page, pageSize))
   const deletion = useMutation(orpc.files.delete.mutationOptions())
 
   /**
@@ -113,7 +120,8 @@ function AdminFiles({ userId }: { userId: string }) {
     <div className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
-          {pagination.total.toLocaleString()} {pagination.total === 1 ? 'file' : 'files'}
+          {hydrated ? pagination.total.toLocaleString() : pagination.total}{' '}
+          {pagination.total === 1 ? 'file' : 'files'}
         </p>
         <label className="flex items-center gap-2 text-sm">
           Per page
@@ -152,8 +160,9 @@ function AdminFiles({ userId }: { userId: string }) {
                     {file.ownerName} · {file.ownerEmail}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {file.mime} · {file.size.toLocaleString()} bytes ·{' '}
-                    {file.createdAt.toLocaleString()} · {file.id}
+                    {file.mime} · {hydrated ? file.size.toLocaleString() : file.size} bytes ·{' '}
+                    {hydrated ? file.createdAt.toLocaleString() : file.createdAt.toISOString()} ·{' '}
+                    {file.id}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
