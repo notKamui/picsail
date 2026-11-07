@@ -69,6 +69,10 @@
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
     ".env": ".env.*",
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx",
+    "*.js": "${capture}.test.js, ${capture}.spec.js",
+    "*.jsx": "${capture}.test.jsx, ${capture}.spec.jsx",
     "vite.config.ts": "oxfmt.config.ts, oxlint.config.ts, tsconfig.json, .editorconfig",
     "tsconfig.json": "tsconfig.*.json",
     "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .nvmrc",
