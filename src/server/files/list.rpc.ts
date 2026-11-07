@@ -60,6 +60,7 @@ async function listFilesForUser(ownerId: string, requestedPage: number, requeste
           id: file.id,
           extension: file.extension,
           mime: blob.mime,
+          blurhash: blob.blurhash,
           byteSize: blob.byteSize,
           originalName: file.originalName,
           createdAt: file.createdAt,
