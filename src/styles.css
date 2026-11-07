@@ -18,6 +18,38 @@ code {
   @apply font-mono;
 }
 
+.landing-art {
+  background: oklch(0.91 0.035 208);
+}
+
+.landing-art-orbit {
+  position: absolute;
+  width: 95%;
+  aspect-ratio: 1;
+  border: 1px solid oklch(1 0 0 / 0.5);
+  border-radius: 50%;
+}
+
+.landing-art-orbit-one {
+  transform: translate(-18%, 15%);
+}
+
+.landing-art-orbit-two {
+  transform: translate(22%, -15%);
+}
+
+.landing-art-image {
+  background:
+    radial-gradient(ellipse at 70% 22%, oklch(0.96 0.06 88) 0 9%, transparent 9.5%),
+    linear-gradient(160deg, transparent 47%, oklch(0.52 0.055 190) 47.5% 66%, transparent 66.5%),
+    linear-gradient(
+      20deg,
+      oklch(0.43 0.05 205) 0 37%,
+      oklch(0.67 0.06 192) 37.5% 58%,
+      oklch(0.84 0.045 85) 58.5%
+    );
+}
+
 :root {
   --background: oklch(0.985 0.004 95);
   --foreground: oklch(0.22 0.015 260);
