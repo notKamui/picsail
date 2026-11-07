@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { FilePagination } from '@/components/file-pagination'
 import { Button } from '@/components/ui/button'
 import { adminFilesQueryOptions, DEFAULT_FILE_PAGE_SIZE } from '@/lib/file-list-query'
 import { formatDateLong, formatNumber } from '@/lib/format'
@@ -160,29 +161,11 @@ function AdminFiles({ userId }: { userId: string }) {
           })}
         </ul>
       )}
-      {pagination.totalPages > 1 && (
-        <nav aria-label="File list pages" className="mt-6 flex items-center justify-between gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pagination.page <= 1}
-            onClick={() => setPage(pagination.page - 1)}
-          >
-            Previous
-          </Button>
-          <p aria-live="polite" className="text-sm text-muted-foreground">
-            Page {pagination.page} of {pagination.totalPages}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => setPage(pagination.page + 1)}
-          >
-            Next
-          </Button>
-        </nav>
-      )}
+      <FilePagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   )
 }

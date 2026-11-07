@@ -4,6 +4,7 @@ import { ImagePlus } from 'lucide-react'
 import { useState } from 'react'
 import { Blurhash } from '@/components/blurhash'
 import { FileDetailsDialog } from '@/components/file-details-dialog'
+import { FilePagination } from '@/components/file-pagination'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { personalFilesQueryOptions } from '@/lib/file-list-query'
@@ -102,36 +103,11 @@ export function UploadWorkspace({ userId }: { userId: string }) {
                 </li>
               ))}
             </ul>
-            {files.data.pagination.totalPages > 1 && (
-              <nav
-                aria-label="File list pages"
-                className="mt-6 flex items-center justify-between gap-3"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={files.data.pagination.page <= 1}
-                  onClick={() =>
-                    files.data?.authenticated && setPage(files.data.pagination.page - 1)
-                  }
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {files.data.pagination.page} of {files.data.pagination.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={files.data.pagination.page >= files.data.pagination.totalPages}
-                  onClick={() =>
-                    files.data?.authenticated && setPage(files.data.pagination.page + 1)
-                  }
-                >
-                  Next
-                </Button>
-              </nav>
-            )}
+            <FilePagination
+              page={files.data.pagination.page}
+              totalPages={files.data.pagination.totalPages}
+              onPageChange={setPage}
+            />
           </>
         )}
       </section>
