@@ -6,7 +6,7 @@ const features = [
   {
     icon: Upload,
     number: '01',
-    title: 'Make it yours',
+    title: 'Upload images',
     description: 'Upload a JPEG, PNG, GIF or WebP to your own image library.',
   },
   {
@@ -52,8 +52,7 @@ export function LandingPage() {
               A quiet place for pictures.
             </h1>
             <p className="mt-6 max-w-md text-base leading-7 text-pretty text-muted-foreground sm:text-lg">
-              Upload an image, share its link, and keep your files close at hand. A little more room
-              for the things worth sharing.
+              Upload images to your own library and share them with a public link.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button size="lg" asChild>
@@ -78,7 +77,7 @@ export function LandingPage() {
             <div className="relative w-full max-w-sm rotate-[-4deg] rounded-2xl bg-card p-3 shadow-xl">
               <div className="landing-art-image flex aspect-[1.2] items-end overflow-hidden rounded-lg p-5">
                 <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold tracking-widest text-slate-800 uppercase">
-                  A little more space
+                  Your library
                 </span>
               </div>
               <div className="flex items-center justify-between px-1 pt-4 pb-1">
@@ -123,7 +122,7 @@ export function LandingPage() {
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-8 text-sm text-muted-foreground sm:px-8">
         <span className="font-serif text-lg font-semibold text-foreground">Picsail.</span>
-        <span>Made for sharing, built to be yours.</span>
+        <span>Self-hosted image sharing.</span>
       </footer>
     </div>
   )

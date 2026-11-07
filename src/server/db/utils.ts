@@ -1,5 +1,5 @@
-import { count, eq, getTableColumns, type InferSelectModel, type SQL, sql } from 'drizzle-orm'
-import type { AnyPgTable, PgColumn, PgTable } from 'drizzle-orm/pg-core'
+import { count, eq, getTableColumns, type InferSelectModel, type SQL } from 'drizzle-orm'
+import type { AnyPgTable, PgColumn } from 'drizzle-orm/pg-core'
 import { db } from '@/server/db'
 
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -120,25 +120,4 @@ export async function paginated<
       totalPages: Math.max(1, Math.ceil(total.total / size)),
     }
   })
-}
-
-/**
- * Builds a Drizzle ON CONFLICT update map using values from the excluded row.
- * @param table - Table containing the columns being updated.
- * @param columns - Table column keys to assign from PostgreSQL's excluded row.
- * @returns A key-to-SQL-expression map for an insert conflict update.
- */
-export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T['_']['columns']>(
-  table: T,
-  columns: Q[],
-) {
-  const tableColumns = getTableColumns(table)
-  return columns.reduce(
-    (acc, column) => {
-      const colName = tableColumns[column].name
-      acc[column] = sql.raw(`excluded.${colName}`)
-      return acc
-    },
-    {} as Record<Q, SQL>,
-  )
 }

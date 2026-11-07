@@ -21,10 +21,10 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
             Your images, your space
           </p>
           <h1 className="mt-4 font-serif text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">
-            Keep the pictures worth sharing close.
+            Your image library.
           </h1>
           <p className="mt-4 text-sm leading-7 text-pretty text-muted-foreground">
-            Your library is ready when you are. Upload an image and share its public link.
+            Upload images and share them with a public link.
           </p>
         </div>
         {children}

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { copyLink } from '@/lib/copy-link'
 import { formatDateLong, formatNumber } from '@/lib/format'
 import { orpc } from '@/lib/orpc'
 import { publicFilePath } from '@/lib/public-file-url'
@@ -48,12 +49,7 @@ export function FileDetailsDialog({ id, onClose }: { id: string; onClose: () => 
    * @returns A promise resolving after reporting clipboard success or failure.
    */
   async function copyUrl() {
-    if (!navigator.clipboard) {
-      setCopyMessage('Clipboard unavailable. Select the link above to copy it.')
-      return
-    }
-    const [error] = await tryAsync(navigator.clipboard.writeText(url))
-    setCopyMessage(error ? 'Could not copy the link. Select it above to copy it.' : 'Link copied.')
+    setCopyMessage(await copyLink(url))
   }
 
   return (

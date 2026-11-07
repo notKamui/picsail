@@ -31,7 +31,7 @@ export function normalizeMime(mimeType: string) {
  * @returns True for a supported type and narrows its TypeScript type.
  */
 export function isSupportedImageMime(mimeType: string): mimeType is SupportedImageMime {
-  return mimeType in extensionByMime
+  return Object.hasOwn(extensionByMime, mimeType)
 }
 
 /**

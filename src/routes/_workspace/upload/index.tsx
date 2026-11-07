@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft, Copy, ImagePlus } from 'lucide-react'
 import { useRef, useState, type DragEvent, type SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { copyLink } from '@/lib/copy-link'
 import { orpc } from '@/lib/orpc'
 import { tryAsync } from '@/lib/try'
 
@@ -81,14 +82,7 @@ function UploadForm() {
    */
   async function copyUrl() {
     if (!uploadedUrl) return
-    if (!navigator.clipboard) {
-      setCopyMessage('Clipboard unavailable. Select the link above to copy it.')
-      return
-    }
-    const [copyError] = await tryAsync(navigator.clipboard.writeText(uploadedUrl))
-    setCopyMessage(
-      copyError ? 'Could not copy the link. Select it above to copy it.' : 'Link copied.',
-    )
+    setCopyMessage(await copyLink(uploadedUrl))
   }
 
   return (
