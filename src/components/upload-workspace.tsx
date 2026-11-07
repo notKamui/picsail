@@ -3,13 +3,12 @@ import { ArrowDownToLine, Copy, ExternalLink, ImagePlus, Trash2 } from 'lucide-r
 import { useEffect, useRef, useState, type DragEvent, type SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { personalFilesQueryOptions } from '@/lib/file-list-query'
+import { formatDateLong, formatNumber } from '@/lib/format'
 import { orpc } from '@/lib/orpc'
 import { publicFilePath } from '@/lib/public-file-url'
 import { tryAsync } from '@/lib/try'
-import { useHydrated } from '@/lib/use-hydrated'
 
 export function UploadWorkspace({ userId }: { userId: string }) {
-  const hydrated = useHydrated()
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -161,10 +160,7 @@ export function UploadWorkspace({ userId }: { userId: string }) {
           </div>
           {files.data?.authenticated && (
             <p className="text-sm text-muted-foreground">
-              {hydrated
-                ? files.data.pagination.total.toLocaleString()
-                : files.data.pagination.total}{' '}
-              files
+              {formatNumber(files.data.pagination.total)} files
             </p>
           )}
         </div>
@@ -192,7 +188,7 @@ export function UploadWorkspace({ userId }: { userId: string }) {
                       {item.originalName || `${item.id}.${item.extension}`}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {item.mime} · {hydrated ? item.size.toLocaleString() : item.size} bytes
+                      {item.mime} · {formatNumber(item.size)} bytes
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setSelectedId(item.id)}>
@@ -327,10 +323,10 @@ function FileDetails({ id, onDeleted }: { id: string; onDeleted: () => void }) {
                 {file.originalName || `${file.hash}.${file.extension}`}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {file.mime} · {file.size.toLocaleString()} bytes
+                {file.mime} · {formatNumber(file.size)} bytes
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                ID {file.hash} · Created {file.createdAt.toLocaleString()}
+                ID {file.hash} · Created {formatDateLong(file.createdAt)}
               </p>
             </div>
             <div>
