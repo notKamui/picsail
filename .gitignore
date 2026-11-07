@@ -22,3 +22,9 @@ todos.json
 
 .github/*
 !.github/workflows/*
+
+# local ai slop
+.agents
+.codex
+.impeccable
+PRODUCT.md
