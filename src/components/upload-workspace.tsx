@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDownToLine, Copy, ExternalLink, ImagePlus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState, type DragEvent, type SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { personalFilesQueryOptions } from '@/lib/file-list-query'
 import { orpc } from '@/lib/orpc'
 import { publicFilePath } from '@/lib/public-file-url'
 import { tryAsync } from '@/lib/try'
+import { useHydrated } from '@/lib/use-hydrated'
 
 export function UploadWorkspace({ userId }: { userId: string }) {
+  const hydrated = useHydrated()
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -15,12 +18,7 @@ export function UploadWorkspace({ userId }: { userId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const upload = useMutation(orpc.files.upload.mutationOptions())
-  const files = useQuery(
-    orpc.files.list.queryOptions({
-      input: { page, pageSize: 20 },
-      queryKey: [...orpc.files.list.key(), userId, page],
-    }),
-  )
+  const files = useQuery(personalFilesQueryOptions(userId, page))
 
   /**
    * Replaces the pending browser selection and clears a previous upload error.
@@ -163,7 +161,10 @@ export function UploadWorkspace({ userId }: { userId: string }) {
           </div>
           {files.data?.authenticated && (
             <p className="text-sm text-muted-foreground">
-              {files.data.pagination.total.toLocaleString()} files
+              {hydrated
+                ? files.data.pagination.total.toLocaleString()
+                : files.data.pagination.total}{' '}
+              files
             </p>
           )}
         </div>
@@ -191,7 +192,7 @@ export function UploadWorkspace({ userId }: { userId: string }) {
                       {item.originalName || `${item.id}.${item.extension}`}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {item.mime} · {item.size.toLocaleString()} bytes
+                      {item.mime} · {hydrated ? item.size.toLocaleString() : item.size} bytes
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setSelectedId(item.id)}>
