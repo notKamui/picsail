@@ -1,5 +1,6 @@
 import { encode as encodeBH } from 'blurhash'
 import sharp from 'sharp'
+import type { ExecutableImageTransform } from './url-transform'
 
 const extensionByMime = {
   'image/jpeg': 'jpg',
@@ -9,12 +10,7 @@ const extensionByMime = {
 } as const
 
 export type SupportedImageMime = keyof typeof extensionByMime
-
-export type ImageDimensions = {
-  width?: number
-  height?: number
-  fit?: 'inside' | 'cover'
-}
+export type ImageOutputFormat = 'jpeg' | 'png' | 'webp' | 'avif'
 
 export class InvalidImageUploadError extends Error {
   constructor() {
@@ -51,19 +47,36 @@ export function imageExtension(mimeType: SupportedImageMime) {
 }
 
 /**
- * Generates a variant for public image serving using Sharp.
+ * Generates a variant by executing each operation in URL order.
  * @param imageBytes - Encoded source image, loaded into memory.
- * @param dimensions - Requested width, height and optional fit (defaults to inside).
- * @returns Encoded resized image bytes; Sharp decoding/encoding errors propagate.
+ * @param transforms - Ordered operations with resize fit already resolved.
+ * @param outputFormat - Optional conversion performed after the ordered operations.
+ * @returns Encoded image bytes; Sharp decoding/encoding errors propagate.
  */
-export async function resizeImageBytes(imageBytes: Uint8Array, dimensions: ImageDimensions) {
-  return Buffer.from(
-    await sharp(Buffer.from(imageBytes))
-      .resize(dimensions.width, dimensions.height, {
-        fit: dimensions.fit ?? 'inside',
-      })
-      .toBuffer(),
-  )
+export async function transformImageBytes(
+  imageBytes: Uint8Array,
+  transforms: ExecutableImageTransform[],
+  outputFormat?: ImageOutputFormat,
+) {
+  let bytes = Buffer.from(imageBytes)
+  for (const transform of transforms) {
+    const image = sharp(bytes)
+    switch (transform.type) {
+      case 'resize': {
+        bytes = await image
+          .resize(transform.width, transform.height, { fit: transform.fit })
+          .toBuffer()
+        break
+      }
+      case 'rotate': {
+        bytes = await image
+          .rotate(transform.direction === 'left' ? 270 : transform.direction === 'right' ? 90 : 180)
+          .toBuffer()
+        break
+      }
+    }
+  }
+  return outputFormat ? sharp(bytes).toFormat(outputFormat).toBuffer() : bytes
 }
 
 /**

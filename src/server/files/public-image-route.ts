@@ -1,21 +1,18 @@
 import { ORPCError } from '@orpc/server'
 import { tryAsync } from '@/lib/try'
+import { getFileContentResponse } from './get-content.rpc'
 import {
-  getFileContentResponse,
-  getTransformedFileContentResponse,
-  UnsupportedImageTransformError,
-} from './get-content.rpc'
-import type { ImageDimensions } from './image-processing'
-import { parsePublicImageUrl, type ImageTransform } from './url-transform'
+  parsePublicImageUrl,
+  type ExecutableImageTransform,
+  type ImageTransform,
+} from './url-transform'
 
 type TransformResolution =
-  | { kind: 'original' }
-  | { kind: 'resize'; dimensions: ImageDimensions }
-  | { kind: 'invalid' }
+  | { kind: 'transform'; transforms: ExecutableImageTransform[] }
   | { kind: 'unsupported' }
 
 /**
- * Handles GET requests for public originals and resized images. It parses the path,
+ * Handles GET requests for public originals and transformed images. It parses the path,
  * dispatches to file serving, and maps known errors to HTTP responses; generating
  * a variant may read and write S3 and update the database cache catalog.
  * @param request - Incoming request whose URL supplies the file and modifiers.
@@ -32,17 +29,13 @@ export async function handlePublicImageRequest(request: Request) {
   const { id, extension, transforms } = parsedUrl.value
   const resolution = resolveTransforms(transforms)
   if (resolution.kind === 'unsupported') return new Response('Not Implemented', { status: 501 })
-  if (resolution.kind === 'invalid') return new Response('Bad Request', { status: 400 })
-
   const [error, result] = await tryAsync(
-    resolution.kind === 'resize'
-      ? getTransformedFileContentResponse({ id, extension }, resolution.dimensions)
-      : getFileContentResponse({ id, extension }),
+    getFileContentResponse({ id, extension }, resolution.transforms),
     [Error],
   )
 
   if (error) {
-    if (error instanceof UnsupportedImageTransformError) {
+    if (error instanceof ORPCError && error.code === 'UNSUPPORTED_MEDIA_TYPE') {
       return new Response(error.message, { status: 415 })
     }
     if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
@@ -60,32 +53,32 @@ export async function handlePublicImageRequest(request: Request) {
 
 /**
  * Selects what the public route can currently execute from parsed modifiers.
- * For multiple resize tokens, the last size wins; force-size selects cover fit.
+ * A fit modifier applies cover to the immediately preceding resize.
  * @param transforms - Parsed modifiers in URL order.
- * @returns An original, resize, invalid or unsupported resolution.
+ * @returns An ordered transform sequence or unsupported resolution.
  */
 function resolveTransforms(transforms: ImageTransform[]): TransformResolution {
-  if (transforms.length === 0) return { kind: 'original' }
-
-  if (
-    transforms.some((transform) => transform.type !== 'resize' && transform.type !== 'force-size')
-  ) {
-    return { kind: 'unsupported' }
+  const operations: ExecutableImageTransform[] = []
+  for (const transform of transforms) {
+    switch (transform.type) {
+      case 'resize': {
+        operations.push({ ...transform, fit: 'inside' })
+        break
+      }
+      case 'fit': {
+        const previous = operations.at(-1)
+        if (previous?.type !== 'resize') return { kind: 'unsupported' }
+        previous.fit = 'cover'
+        break
+      }
+      case 'rotate': {
+        operations.push(transform)
+        break
+      }
+      default: {
+        return { kind: 'unsupported' }
+      }
+    }
   }
-
-  const resizeTransforms = transforms.filter((transform) => transform.type === 'resize')
-  const forceSize = transforms.some((transform) => transform.type === 'force-size')
-  if (forceSize && resizeTransforms.length === 0) return { kind: 'invalid' }
-
-  const resize = resizeTransforms.at(-1)
-  if (!resize || resize.type !== 'resize') return { kind: 'invalid' }
-
-  return {
-    kind: 'resize',
-    dimensions: {
-      width: resize.width,
-      height: resize.height,
-      fit: forceSize ? 'cover' : 'inside',
-    },
-  }
+  return { kind: 'transform', transforms: operations }
 }

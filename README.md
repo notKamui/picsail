@@ -5,8 +5,8 @@ share public links, and manage your files in the workspace. Administrators can
 review and delete files across users.
 
 The app uses TanStack Start, oRPC, Better Auth, PostgreSQL, and S3-compatible
-object storage. Public image URLs support resizing; animated GIFs are served
-as originals.
+object storage. Public image URLs support ordered still-image transformations;
+animated GIFs are served as originals.
 
 ## Local development
 
@@ -31,6 +31,20 @@ With the app running, visit <http://localhost:3000/api/docs> for the API
 reference or <http://localhost:3000/api/openapi.json> for its schema.
 Public files are served under `/f/{id}.{extension}`; resized variants use
 `/f/{dimensions}/{id}.{extension}`.
+
+For still images, add up to 16 transformation segments before the filename.
+They execute from left to right:
+
+- `800`, `800x600`, or `x600` resize within those dimensions (maximum 4096 per axis).
+- `fit` immediately after a resize crops it to fill the requested dimensions,
+  for example `/f/800x600/fit/{id}.jpg`.
+- `left`, `right`, and `upside` rotate 90 degrees counterclockwise, 90 degrees
+  clockwise, and 180 degrees respectively.
+
+The filename extension selects the output format: `.jpg` (or `.jpeg`), `.png`,
+`.webp`, or `.avif`. For example, `/f/800x600/fit/right/{id}.webp` resizes,
+crops and rotates the image, then serves it as WebP. Requesting the original
+format without transformations returns the original bytes.
 
 Deletion requires a signed-in owner or administrator. Public image links can
 be accessed without signing in.

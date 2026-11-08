@@ -3,14 +3,42 @@ import { parseImageTransforms, parsePublicImageUrl } from './url-transform'
 
 describe('public image URLs', () => {
   it('normalizes IDs and parses ordered resize modifiers', () => {
-    expect(parsePublicImageUrl('/f/800x600/forcesize/ABCDEF123456.PNG')).toEqual({
+    expect(parsePublicImageUrl('/f/800x600/fit/ABCDEF123456.PNG')).toEqual({
       success: true,
       value: {
         id: 'abcdef123456',
         extension: 'png',
-        transforms: [{ type: 'resize', width: 800, height: 600 }, { type: 'force-size' }],
+        transforms: [{ type: 'resize', width: 800, height: 600 }, { type: 'fit' }],
       },
     })
+  })
+
+  it('accepts rotation and repeated resizes in order', () => {
+    expect(parseImageTransforms(['100x50', 'fit', 'right', '20'])).toEqual({
+      success: true,
+      value: [
+        { type: 'resize', width: 100, height: 50 },
+        { type: 'fit' },
+        { type: 'rotate', direction: 'right' },
+        { type: 'resize', width: 20, height: undefined },
+      ],
+    })
+  })
+
+  it.each(['webp', 'avif'])('rejects format segment %s', (token) => {
+    expect(parseImageTransforms([token])).toEqual({ success: false })
+  })
+
+  it.each([[['fit']], [['forcesize']], [['100', 'right', 'fit']], [['100', 'fit', 'fit']]])(
+    'rejects invalid or obsolete fit usage %j',
+    (tokens) => {
+      expect(parseImageTransforms(tokens)).toEqual({ success: false })
+    },
+  )
+
+  it('limits the number of transformations', () => {
+    expect(parseImageTransforms(Array.from({ length: 16 }, () => 'right')).success).toBe(true)
+    expect(parseImageTransforms(Array.from({ length: 17 }, () => 'right')).success).toBe(false)
   })
 
   it.each(['0', '4097', 'x0', '4096x4097', '99999999999999999999', 'x'])(

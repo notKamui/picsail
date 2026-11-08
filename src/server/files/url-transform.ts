@@ -1,14 +1,18 @@
 export type ImageTransform =
   | { type: 'resize'; width?: number; height?: number }
-  | { type: 'force-size' }
+  | { type: 'fit' }
   | { type: 'rotate'; direction: 'upside' | 'left' | 'right' }
   | { type: 'filter'; name: string; values?: number[] }
-  | { type: 'format'; format: 'webp' | 'avif' }
   | { type: 'video'; format: 'mp4' }
   | { type: 'video-mode'; mode: 'raw' | 'preview' | 'download' }
 
+export type ExecutableImageTransform =
+  | { type: 'resize'; width?: number; height?: number; fit: 'inside' | 'cover' }
+  | Extract<ImageTransform, { type: 'rotate' }>
+
 const MAX_IMAGE_DIMENSION = 4096
 const MAX_FILTER_VALUE = 1000
+const MAX_TRANSFORMS = 16
 const filters = new Set([
   'sepia',
   'sepia2',
@@ -62,7 +66,6 @@ type TransformParser = (token: string) => ImageTransform | null | undefined
 const transformParsers: TransformParser[] = [
   parseDimensions,
   parseGeometryModifier,
-  parseFormatModifier,
   parseVideoModifier,
   parseFilter,
 ]
@@ -103,11 +106,15 @@ export function parsePublicImageUrl(pathname: string): ParsedImageUrlResult {
  * @returns Typed transforms in input order or a failure if any token is invalid.
  */
 export function parseImageTransforms(tokens: string[]): ParseResult<ImageTransform[]> {
+  if (tokens.length > MAX_TRANSFORMS) return { success: false }
   const transforms: ImageTransform[] = []
 
   for (const token of tokens) {
     const transform = parseImageTransform(token.toLowerCase())
     if (!transform) return { success: false }
+    if (transform.type === 'fit' && transforms.at(-1)?.type !== 'resize') {
+      return { success: false }
+    }
     transforms.push(transform)
   }
 
@@ -174,24 +181,15 @@ function parseResizeDimensions(
 }
 
 /**
- * Recognizes force-size and rotation modifiers for future transform resolution.
+ * Recognizes fit and rotation modifiers.
  * @param token - Lowercase transform segment.
  * @returns The corresponding typed modifier, or undefined when it does not match.
  */
 function parseGeometryModifier(token: string): ImageTransform | undefined {
-  if (token === 'forcesize') return { type: 'force-size' }
+  if (token === 'fit') return { type: 'fit' }
   if (token === 'upside' || token === 'left' || token === 'right') {
     return { type: 'rotate', direction: token }
   }
-}
-
-/**
- * Recognizes image output-format modifiers without converting an image.
- * @param token - Lowercase transform segment.
- * @returns A format modifier for webp or avif, otherwise undefined.
- */
-function parseFormatModifier(token: string): ImageTransform | undefined {
-  if (token === 'webp' || token === 'avif') return { type: 'format', format: token }
 }
 
 /**

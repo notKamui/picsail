@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { openapi } from '@orpc/openapi'
 import { ORPCError, os } from '@orpc/server'
 import { eq } from 'drizzle-orm'
@@ -5,7 +6,8 @@ import * as z from 'zod'
 import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
 import { storage } from '@/server/storage'
-import { resizeImageBytes, type ImageDimensions } from './image-processing'
+import { transformImageBytes, type ImageOutputFormat } from './image-processing'
+import type { ExecutableImageTransform } from './url-transform'
 import { openCachedVariant, storeCachedVariant } from './variant-cache'
 
 export default os
@@ -27,6 +29,7 @@ export default os
               'image/png': { schema: { type: 'string', format: 'binary' } },
               'image/gif': { schema: { type: 'string', format: 'binary' } },
               'image/webp': { schema: { type: 'string', format: 'binary' } },
+              'image/avif': { schema: { type: 'string', format: 'binary' } },
             },
           },
         },
@@ -46,86 +49,88 @@ export default os
       body: z.custom<ReadableStream<Uint8Array>>(),
     }),
   )
-  .handler(async ({ input }) => getFileContentResponse(input))
+  .handler(async ({ input }) => getFileContentResponse(input, []))
 
-/**
- * Opens an original for the public file route and the oRPC content procedure.
- * Reads file/blob metadata from PostgreSQL and the original stream from S3.
- * @param input - Public file ID and expected extension.
- * @returns A 200 response description with MIME, length and readable body stream.
- * @throws NOT_FOUND if the file, extension or stored object is missing.
- */
-export async function getFileContentResponse(input: { id: string; extension: string }) {
-  const fileContent = await findFileContent(input.id)
-  assertFileExists(fileContent, input.extension)
-
-  const object = await storage.open(`blobs/${fileContent.sha256}`)
-  if (!object) throw new ORPCError('NOT_FOUND')
-
-  return createFileResponse(fileContent.mime, fileContent.byteSize, object.body)
+const outputFormats: Record<string, { format: ImageOutputFormat; mime: string }> = {
+  jpg: { format: 'jpeg', mime: 'image/jpeg' },
+  jpeg: { format: 'jpeg', mime: 'image/jpeg' },
+  png: { format: 'png', mime: 'image/png' },
+  webp: { format: 'webp', mime: 'image/webp' },
+  avif: { format: 'avif', mime: 'image/avif' },
 }
 
 /**
- * Serves a public resized image from cache or generates and stores it on a miss.
- * Reads the source into memory and may update the cache and evict other variants.
- * @param input - Public file ID and expected extension.
- * @param dimensions - Width, height and fit used for the variant and cache key.
+ * Serves an original or a cached image variant, generating the variant on a miss.
+ * Variant generation reads the source into memory and may evict other variants.
+ * @param input - Public file ID and requested output extension.
+ * @param transforms - Ordered transformations used for the variant and cache key.
  * @returns A 200 response description with the encoded variant stream and headers.
- * @throws NOT_FOUND for missing content or UnsupportedImageTransformError for GIFs.
+ * @throws NOT_FOUND for missing content or UNSUPPORTED_MEDIA_TYPE for unsupported transforms.
  */
-export async function getTransformedFileContentResponse(
+export async function getFileContentResponse(
   input: { id: string; extension: string },
-  dimensions: ImageDimensions,
+  transforms: ExecutableImageTransform[],
 ) {
   const fileContent = await findFileContent(input.id)
-  assertFileExists(fileContent, input.extension)
-  if (fileContent.mime === 'image/gif') throw new UnsupportedImageTransformError()
+  if (!fileContent) throw new ORPCError('NOT_FOUND')
+  const extension = input.extension.toLowerCase()
+  const output = Object.hasOwn(outputFormats, extension) ? outputFormats[extension] : undefined
+  if (!output && extension !== fileContent.extension) throw new ORPCError('NOT_FOUND')
 
-  const cacheKey = `cache/${fileContent.sha256}/resize-${dimensions.fit ?? 'inside'}-${dimensions.width ?? ''}x${dimensions.height ?? ''}`
+  const mime = output?.mime ?? fileContent.mime
+  if (transforms.length === 0 && mime === fileContent.mime) {
+    const object = await openOriginal(fileContent.sha256)
+    return createFileResponse(fileContent.mime, fileContent.byteSize, object.body)
+  }
+
+  if (fileContent.mime === 'image/gif' || !output) {
+    throw new ORPCError('UNSUPPORTED_MEDIA_TYPE', {
+      message: 'GIF transformations are not supported',
+    })
+  }
+
+  return getVariantResponse(fileContent, transforms, output)
+}
+
+async function getVariantResponse(
+  fileContent: NonNullable<Awaited<ReturnType<typeof findFileContent>>>,
+  transforms: ExecutableImageTransform[],
+  output: { format: ImageOutputFormat; mime: string },
+) {
+  const transformHash = createHash('sha256')
+    .update(JSON.stringify({ transforms, format: output.format }))
+    .digest('hex')
+  const cacheKey = `cache/${fileContent.sha256}/v3-${transformHash}`
   const cachedObject = await openCachedVariant(cacheKey, fileContent.sha256)
   if (cachedObject) {
     return createFileResponse(
-      fileContent.mime,
+      output.mime,
       cachedObject.contentLength ?? undefined,
       cachedObject.body,
     )
   }
 
-  const source = await storage.open(`blobs/${fileContent.sha256}`)
-  if (!source) throw new ORPCError('NOT_FOUND')
+  const source = await openOriginal(fileContent.sha256)
   const sourceBytes = new Uint8Array(await new Response(source.body).arrayBuffer())
-  const transformedBytes = await resizeImageBytes(sourceBytes, dimensions)
+  const transformedBytes = await transformImageBytes(
+    sourceBytes,
+    transforms,
+    output.mime === fileContent.mime ? undefined : output.format,
+  )
 
-  await storeCachedVariant(cacheKey, fileContent.sha256, transformedBytes, fileContent.mime)
+  await storeCachedVariant(cacheKey, fileContent.sha256, transformedBytes, output.mime)
 
   return createFileResponse(
-    fileContent.mime,
+    output.mime,
     transformedBytes.byteLength,
     new Response(transformedBytes).body!,
   )
 }
 
-export class UnsupportedImageTransformError extends Error {
-  constructor() {
-    super('GIF resizing is not supported')
-    this.name = 'UnsupportedImageTransformError'
-  }
-}
-
-/**
- * Validates metadata before serving an original or transformed public file.
- * @param fileContent - Metadata lookup result, possibly null.
- * @param extension - Extension requested in the public URL.
- * @returns Nothing; narrows fileContent to a non-null value.
- * @throws NOT_FOUND if metadata is absent or the extension does not match.
- */
-function assertFileExists(
-  fileContent: Awaited<ReturnType<typeof findFileContent>>,
-  extension: string,
-): asserts fileContent is NonNullable<typeof fileContent> {
-  if (!fileContent || fileContent.extension !== extension) {
-    throw new ORPCError('NOT_FOUND')
-  }
+async function openOriginal(sha256: string) {
+  const object = await storage.open(`blobs/${sha256}`)
+  if (!object) throw new ORPCError('NOT_FOUND')
+  return object
 }
 
 /**

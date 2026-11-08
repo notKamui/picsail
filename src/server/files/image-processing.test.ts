@@ -7,6 +7,7 @@ import {
   isSupportedImageMime,
   normalizeMime,
   prepareStoredImageBytes,
+  transformImageBytes,
 } from './image-processing'
 
 describe('supported image types', () => {
@@ -30,6 +31,85 @@ describe('supported image types', () => {
   it('normalizes MIME type casing and parameters', () => {
     expect(normalizeMime('IMAGE/JPEG;charset=utf-8')).toBe('image/jpeg')
   })
+})
+
+describe('ordered image transformations', () => {
+  it('applies resize and rotation in order, including repeated resizes', async () => {
+    const image = await sharp({
+      create: { width: 80, height: 40, channels: 3, background: 'red' },
+    })
+      .png()
+      .toBuffer()
+    const resizeThenRotate = await transformImageBytes(image, [
+      { type: 'resize', width: 40, fit: 'inside' },
+      { type: 'rotate', direction: 'right' },
+    ])
+    const rotateThenResize = await transformImageBytes(image, [
+      { type: 'rotate', direction: 'right' },
+      { type: 'resize', width: 40, fit: 'inside' },
+    ])
+    expect(await sharp(resizeThenRotate).metadata()).toMatchObject({ width: 20, height: 40 })
+    expect(await sharp(rotateThenResize).metadata()).toMatchObject({ width: 40, height: 80 })
+
+    const repeated = await transformImageBytes(image, [
+      { type: 'resize', width: 40, height: 40, fit: 'cover' },
+      { type: 'resize', width: 10, fit: 'inside' },
+    ])
+    expect(await sharp(repeated).metadata()).toMatchObject({ width: 10, height: 10 })
+  })
+
+  it('applies rotations in order to pixel positions', async () => {
+    const image = await sharp(Buffer.from([255, 0, 0, 0, 0, 255]), {
+      raw: { width: 2, height: 1, channels: 3 },
+    })
+      .png()
+      .toBuffer()
+    const rotated = await transformImageBytes(image, [
+      { type: 'rotate', direction: 'right' },
+      { type: 'rotate', direction: 'upside' },
+    ])
+    const { data, info } = await sharp(rotated).raw().toBuffer({ resolveWithObject: true })
+    expect(info).toMatchObject({ width: 1, height: 2 })
+    expect([...data]).toEqual([0, 0, 255, 255, 0, 0])
+  })
+
+  it.each([
+    ['right', [255, 0, 0, 0, 0, 255]],
+    ['left', [0, 0, 255, 255, 0, 0]],
+  ] as const)('rotates %s in the expected direction', async (direction, expectedPixels) => {
+    const image = await sharp(Buffer.from([255, 0, 0, 0, 0, 255]), {
+      raw: { width: 2, height: 1, channels: 3 },
+    })
+      .png()
+      .toBuffer()
+    const rotated = await transformImageBytes(image, [{ type: 'rotate', direction }])
+    const { data, info } = await sharp(rotated).raw().toBuffer({ resolveWithObject: true })
+    expect(info).toMatchObject({ width: 1, height: 2 })
+    expect([...data]).toEqual(expectedPixels)
+  })
+
+  it.each(['jpeg', 'png', 'webp', 'avif'] as const)(
+    'converts to %s after resize',
+    async (format) => {
+      const image = await sharp({
+        create: { width: 16, height: 8, channels: 3, background: 'red' },
+      })
+        .png()
+        .toBuffer()
+      const result = await transformImageBytes(
+        image,
+        [{ type: 'resize', width: 8, fit: 'inside' }],
+        format,
+      )
+      const metadata = await sharp(result).metadata()
+      expect(metadata).toMatchObject({
+        width: 8,
+        height: 4,
+        format: format === 'avif' ? 'heif' : format,
+      })
+      if (format === 'avif') expect(metadata.compression).toBe('av1')
+    },
+  )
 })
 
 describe('uploaded image decoding', () => {
