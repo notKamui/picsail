@@ -1,10 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { openapi } from '@orpc/openapi'
-import { os } from '@orpc/server'
+import { ORPCError, os } from '@orpc/server'
 import { and, eq } from 'drizzle-orm'
 import * as z from 'zod'
 import { env } from '@/lib/env/server'
 import { publicFileUrl } from '@/lib/public-file-url'
+import { tryAsync } from '@/lib/try'
 import { getSession } from '@/server/auth/session'
 import { db, takeUniqueOrNull } from '@/server/db'
 import { blob, file } from '@/server/db/schema/file'
@@ -14,6 +15,7 @@ import { lockBlob } from './blob-lock'
 import {
   calculateBlurhash,
   imageExtension,
+  InvalidImageUploadError,
   isSupportedImageMime,
   normalizeMime,
   prepareStoredImageBytes,
@@ -57,7 +59,14 @@ export default os
     const validation = await validateUpload(input.file)
     if (validation.status !== 'ok') return validation
 
-    const prepared = await prepareImageUpload(input.file, validation.mimeType)
+    const [imageError, prepared] = await tryAsync(
+      prepareImageUpload(input.file, validation.mimeType),
+      [InvalidImageUploadError],
+    )
+    if (imageError) {
+      throw new ORPCError('BAD_REQUEST', { message: imageError.message })
+    }
+
     const storedFile = await persistUploadedFile({
       ownerId: validation.ownerId,
       originalName: input.file.name,

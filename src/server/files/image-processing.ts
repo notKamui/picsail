@@ -16,6 +16,13 @@ export type ImageDimensions = {
   fit?: 'inside' | 'cover'
 }
 
+export class InvalidImageUploadError extends Error {
+  constructor() {
+    super('This file is not a valid image. Choose a valid JPEG, PNG, GIF or WebP file.')
+    this.name = 'InvalidImageUploadError'
+  }
+}
+
 /**
  * Normalizes an upload's declared MIME type before checking supported formats.
  * @param mimeType - MIME header or file type, possibly with parameters.
@@ -62,9 +69,10 @@ export async function resizeImageBytes(imageBytes: Uint8Array, dimensions: Image
 /**
  * Prepares upload bytes for hashing and storage. GIF bytes are preserved; other
  * supported types are decoded, auto-oriented and re-encoded without metadata.
+ * Decoder failures for invalid input throw InvalidImageUploadError.
  * @param sourceBytes - Entire uploaded image.
  * @param mimeType - Normalized declared image MIME type.
- * @returns Stored bytes, or the original input for GIF; Sharp errors propagate.
+ * @returns Stored bytes, or the original input for GIF; unexpected errors propagate.
  */
 export async function prepareStoredImageBytes(sourceBytes: Uint8Array, mimeType: string) {
   if (mimeType === 'image/gif') {
@@ -73,8 +81,8 @@ export async function prepareStoredImageBytes(sourceBytes: Uint8Array, mimeType:
 
   const outputFormat =
     mimeType === 'image/webp' ? 'webp' : mimeType === 'image/png' ? 'png' : 'jpeg'
-  return Buffer.from(
-    await sharp(Buffer.from(sourceBytes))
+  return processUploadedImage(() =>
+    sharp(Buffer.from(sourceBytes))
       .rotate()
       .toFormat(outputFormat, {
         quality: 92,
@@ -87,18 +95,43 @@ export async function prepareStoredImageBytes(sourceBytes: Uint8Array, mimeType:
 /**
  * Computes the placeholder stored with a blob during upload.
  * @param imageBytes - Encoded image bytes to decode and downscale in memory.
- * @returns A 4-by-4 component BlurHash string; decoding errors propagate.
+ * @returns A 4-by-4 component BlurHash string; invalid images throw InvalidImageUploadError.
  */
 export async function calculateBlurhash(imageBytes: Uint8Array) {
-  const { data, info } = await sharp(Buffer.from(imageBytes))
-    .rotate()
-    .resize(32, 32, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true })
+  return processUploadedImage(async () => {
+    const { data, info } = await sharp(Buffer.from(imageBytes))
+      .rotate()
+      .resize(32, 32, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true })
 
-  return encodeBH(new Uint8ClampedArray(data), info.width, info.height, 4, 4)
+    return encodeBH(new Uint8ClampedArray(data), info.width, info.height, 4, 4)
+  })
+}
+
+async function processUploadedImage<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (isImageDecoderInputError(error)) {
+      throw new InvalidImageUploadError()
+    }
+
+    throw error
+  }
+}
+
+function isImageDecoderInputError(error: unknown): error is Error {
+  if (!(error instanceof Error)) return false
+
+  return (
+    /^Input buffer (?:contains unsupported image format|has corrupt header)/i.test(error.message) ||
+    /^(?:Vips(?:Jpeg|Png|Webp|Gif)|vips(?:jpeg|png|webp|gif)|(?:jpeg|png|webp|gif)load(?:_buffer)?):.*(?:read error|corrupt|invalid|unsupported|unexpected|premature|no image|parse|truncated|end of)/i.test(
+      error.message,
+    )
+  )
 }

@@ -25,6 +25,7 @@ describe('UploadForm', () => {
     expect(html).toContain('example.png')
     expect(html).toContain('Uploading…')
     expect(html).toContain('Upload failed')
+    expect(html).toMatch(/<p role="alert"[^>]*>Upload failed<\/p>/)
     expect(html).toMatch(/<input[^>]* disabled=""/)
     expect(html).toMatch(/<button[^>]*type="submit"[^>]* disabled=""/)
   })
