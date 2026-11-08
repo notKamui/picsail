@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, lazyPlugins } from 'vite-plus'
 import fmt from './oxfmt.config.ts'
 import lint from './oxlint.config.ts'
+import { buildServeEntrypoint } from './plugins/build-serve-entrypoint.ts'
 import { ensureBucketPlugin } from './plugins/ensure-bucket.ts'
 import { orpcRouterPlugin } from './plugins/orpc-router.ts'
 
@@ -28,6 +29,7 @@ const config = defineConfig({
     tanstackStart(),
     react(),
     ensureBucketPlugin(),
+    buildServeEntrypoint(),
   ]),
   run: {
     cache: {

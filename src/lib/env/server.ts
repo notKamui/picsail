@@ -9,6 +9,15 @@ export const env = createEnv({
       .string()
       .default('3000')
       .transform((s) => Number.parseInt(s, 10)),
+    ADMIN_EMAILS: z
+      .string()
+      .default('')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((email) => email.trim())
+          .filter(Boolean),
+      ),
     MAX_UPLOAD_BYTES: z.coerce
       .number()
       .int()

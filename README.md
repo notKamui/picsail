@@ -35,8 +35,30 @@ Public files are served under `/f/{id}.{extension}`; resized variants use
 Deletion requires a signed-in owner or administrator. Public image links can
 be accessed without signing in.
 
+## Production
+
+Build the standalone Node server and container image with:
+
+```sh
+vp build
+vp run start
+docker build -f deployment/Dockerfile -t picsail .
+```
+
+The standalone server runs `.drizzle` migrations before listening on `PORT`.
+For Docker, pass production settings at runtime with an environment file:
+
+```sh
+docker run --env-file /path/to/picsail.env -p 3000:3000 picsail
+```
+
+The image runs as a non-root user and does not include Vite+. Configure
+`DATABASE_URL`, `BASE_URL`, `BETTER_AUTH_SECRET`, and the S3 settings for services
+reachable from the container. `ADMIN_EMAILS` is a comma-separated list of
+existing account email addresses to grant the admin role at startup. The S3
+bucket must already exist.
+
 ## Checks
 
 Run `vp check` for formatting, lint, and type checks, `vp test` for tests, and
-`vp run build` for a production build. Production packaging and deployment are
-still in progress.
+`vp run build` for a production build.
