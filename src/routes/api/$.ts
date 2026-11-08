@@ -4,7 +4,11 @@ import { OpenAPIReferenceHandlerPlugin } from '@orpc/openapi/plugins'
 import { onError } from '@orpc/server'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { createFileRoute } from '@tanstack/react-router'
-import { createTmpFileUploadPlugin, normalizeFetchRequest } from '@/server/orpc/request'
+import {
+  createPublicApiCorsPlugin,
+  createTmpFileUploadPlugin,
+  normalizeFetchRequest,
+} from '@/server/orpc/request'
 import { router } from '@/server/orpc/router.gen'
 
 const generator = new OpenAPIGenerator({
@@ -14,6 +18,7 @@ const generator = new OpenAPIGenerator({
 const handler = new OpenAPIHandler(router, {
   plugins: [
     createTmpFileUploadPlugin(),
+    createPublicApiCorsPlugin(),
     new OpenAPIReferenceHandlerPlugin({
       spec: () =>
         generator.generate(router, {

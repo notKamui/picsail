@@ -1,5 +1,16 @@
 import { TmpFileUploadHandlerPlugin } from '@orpc/node'
+import { CORSHandlerPlugin } from '@orpc/server/plugins'
 import { env } from '@/lib/env/server'
+
+/**
+ * Creates a CORS handler plugin for the public API.
+ * @returns A CORS handler plugin configured for the public API.
+ */
+export function createPublicApiCorsPlugin() {
+  return new CORSHandlerPlugin({
+    exposeHeaders: ['Content-Disposition', 'Standard-Server'],
+  })
+}
 
 /**
  * Creates the oRPC multipart plugin used by request handlers to limit uploads
