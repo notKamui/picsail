@@ -40,6 +40,14 @@ const config = defineConfig({
         command: 'vpx taze major -lI --maturity-period 1 --request-timeout 10000',
         cache: false,
       },
+      'dev:docker': {
+        command: 'docker-compose -f docker-compose.dev.yml',
+        cache: false,
+      },
+      'dev:docker:up': {
+        command: 'docker-compose -f docker-compose.dev.yml up -d',
+        cache: false,
+      },
     },
   },
 })

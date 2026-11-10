@@ -16,8 +16,8 @@ services:
     image: rustfs/rustfs:latest
     container_name: rustfs_picsail_dev
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '${S3_PORT:-9000}:9000'
+      - '${S3_CONSOLE_PORT:-9001}:9001'
     environment:
       RUSTFS_VOLUMES: /data
       RUSTFS_ADDRESS: ':9000'
