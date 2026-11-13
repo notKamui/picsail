@@ -22,12 +22,9 @@ const config = defineConfig({
   plugins: lazyPlugins(() => [
     devtools(),
     tailwindcss(),
-    orpcRouterPlugin({
-      proceduresDir: 'src/server',
-      outputFile: 'src/server/orpc/router.gen.ts',
-    }),
+    orpcRouterPlugin({ proceduresDir: 'src/server', outputFile: 'src/server/orpc/router.gen.ts' }),
     tanstackStart(),
-    react(),
+    react({ compiler: true }),
     ensureBucketPlugin(),
     buildServeEntrypoint(),
   ]),
